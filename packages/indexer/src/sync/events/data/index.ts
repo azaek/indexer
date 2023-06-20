@@ -110,6 +110,7 @@ export type EventSubKind =
   | "foundation-buy-price-cancelled"
   | "foundation-buy-price-accepted"
   | "foundation-offer-accepted"
+  | "foundation-offer-made"
   | "x2y2-order-cancelled"
   | "x2y2-order-inventory"
   | "seaport-order-cancelled"
@@ -280,6 +281,7 @@ const allEventData = [
   foundation.buyPriceInvalidated,
   foundation.buyPriceSet,
   foundation.offerAccepted,
+  foundation.offerMade,
   looksRare.cancelAllOrders,
   looksRare.cancelMultipleOrders,
   looksRare.takerAsk,

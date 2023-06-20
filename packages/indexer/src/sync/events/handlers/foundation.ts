@@ -206,7 +206,7 @@ export const handleEvents = async (events: EnhancedEvent[], onChainData: OnChain
 
         onChainData.fillInfos.push({
           context: `foundation-${contract}-${tokenId}-${baseEventParams.txHash}`,
-          orderSide: "sell",
+          orderSide: "buy",
           contract,
           tokenId,
           amount: "1",
@@ -214,6 +214,34 @@ export const handleEvents = async (events: EnhancedEvent[], onChainData: OnChain
           timestamp: baseEventParams.timestamp,
           maker,
           taker,
+        });
+
+        break;
+      }
+
+      case "foundation-offer-made": {
+        const parsedLog = eventData.abi.parseLog(log);
+        const contract = parsedLog.args["nftContract"].toLowerCase();
+        const tokenId = parsedLog.args["tokenId"].toString();
+        const maker = parsedLog.args["buyer"].toLowerCase();
+        const price = parsedLog.args["amount"].toString();
+
+        onChainData.orders.push({
+          kind: "foundation",
+          info: {
+            orderParams: {
+              contract,
+              tokenId,
+              maker,
+              price,
+              txHash: baseEventParams.txHash,
+              txTimestamp: baseEventParams.timestamp,
+              txBlock: baseEventParams.block,
+              logIndex: baseEventParams.logIndex,
+              batchIndex: baseEventParams.batchIndex,
+            },
+            metadata: {},
+          },
         });
 
         break;

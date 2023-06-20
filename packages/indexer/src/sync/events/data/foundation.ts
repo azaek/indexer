@@ -85,3 +85,20 @@ export const offerAccepted: EventData = {
     )`,
   ]),
 };
+
+export const offerMade: EventData = {
+  kind: "foundation",
+  subKind: "foundation-offer-made",
+  addresses: { [Foundation.Addresses.Exchange[config.chainId]?.toLowerCase()]: true },
+  topic: "0x00ce0a712e4e277ac7b34942865f0de7a5629dffe0539b70423ad5ff1ed6ab42",
+  numTopics: 4,
+  abi: new Interface([
+    `event OfferMade(
+      address indexed nftContract,
+      uint256 indexed tokenId,
+      address indexed buyer,
+      uint256 amount,
+      uint256 expiration
+    )`,
+  ]),
+};
