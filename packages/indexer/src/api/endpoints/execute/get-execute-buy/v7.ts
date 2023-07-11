@@ -210,8 +210,8 @@ export const getExecuteBuyV7Options: RouteOptions = {
           quantity: Joi.number().unsafe(),
           source: Joi.string().allow("", null),
           currency: Joi.string().lowercase().pattern(regex.address),
-          currencySymbol: Joi.string().optional(),
-          currencyDecimals: Joi.number().optional(),
+          currencySymbol: Joi.string().optional().allow(null),
+          currencyDecimals: Joi.number().optional().allow(null),
           quote: Joi.number().unsafe(),
           rawQuote: Joi.string().pattern(regex.number),
           buyInQuote: Joi.number().unsafe(),
@@ -479,7 +479,11 @@ export const getExecuteBuyV7Options: RouteOptions = {
           items[i].originalItemIndex !== undefined ? items[i].originalItemIndex! : i;
 
         if (!item.quantity) {
-          item.quantity = 1;
+          if (preview) {
+            item.quantity = 20;
+          } else {
+            item.quantity = 1;
+          }
         }
 
         // Scenario 1: fill via `rawOrder`
