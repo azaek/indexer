@@ -64,13 +64,10 @@ export class ExportDataJob extends AbstractRabbitMqJobHandler {
   concurrency = 1;
   useSharedChannel = true;
   consumerTimeout = 120000;
-  disableConsuming = true;
 
   protected async process(payload: ExportDataJobPayload) {
     const { taskId } = payload;
     const queryLimit = 5000;
-
-    logger.info(this.queueName, `Start. taskId=${taskId}`);
 
     const timeBefore = performance.now();
 
@@ -289,19 +286,15 @@ if (config.doBackgroundWork) {
         .then(async () => {
           redb
             .manyOrNone(`SELECT id FROM data_export_tasks WHERE is_active = TRUE`)
-            .then(async (tasks) => {
-              logger.info(exportDataJob.queueName, `addToQueue. tasks=${JSON.stringify(tasks)}`);
-
-              for (const task of tasks) {
-                await exportDataJob.addToQueue({ taskId: task.id });
-              }
-            })
-            .catch((error) => {
-              logger.error(exportDataJob.queueName, `acquireError. error=${JSON.stringify(error)}`);
+            .then(async (tasks) =>
+              tasks.forEach((task) => exportDataJob.addToQueue({ taskId: task.id }))
+            )
+            .catch(() => {
+              // Skip on any errors
             });
         })
-        .catch((error) => {
-          logger.error(exportDataJob.queueName, `getTasksError. error=${JSON.stringify(error)}`);
+        .catch(() => {
+          // Skip on any errors
         })
   );
 }
