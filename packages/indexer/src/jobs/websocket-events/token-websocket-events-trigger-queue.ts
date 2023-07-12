@@ -232,11 +232,11 @@ if (config.doBackgroundWork && config.doWebsocketServerWork) {
         if (data.trigger === "insert") eventType = "token.created";
         else if (data.trigger === "update") {
           eventType = "token.updated";
-          if (data.before && (config.chainId === 137 || config.chainId === 5)) {
+          if (data.before) {
             for (const key in changedMapping) {
               // eslint-disable-next-line
               // @ts-ignore
-              if (data.before[key] && data.after[key] && data.before[key] !== data.after[key]) {
+              if (data.before[key] !== data.after[key]) {
                 changed.push(key);
               }
             }
