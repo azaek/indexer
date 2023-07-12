@@ -38,9 +38,10 @@ if (config.doBackgroundWork && config.catchup) {
         )
         .then(async () => {
           try {
-            // await realtimeEventsSync.addToQueue();
-            const latestBlock = await baseProvider.getBlockNumber();
-            await realtimeEventsSyncV2.addToQueue({ block: latestBlock });
+            if (!config.master || !networkSettings.enableWebSocket) {
+              const block = await baseProvider.getBlockNumber();
+              await realtimeEventsSyncV2.addToQueue({ block });
+            }
             logger.info("events-sync-catchup", "Catching up events");
           } catch (error) {
             logger.error("events-sync-catchup", `Failed to catch up events: ${error}`);
@@ -63,10 +64,7 @@ if (config.doBackgroundWork && config.catchup) {
         logger.info("events-sync-catchup", `Detected new block ${block}`);
 
         try {
-          // await realtimeEventsSync.addToQueue();
-          // if (config.enableRealtimeV2BlockQueue) {
           await realtimeEventsSyncV2.addToQueue({ block });
-          // }
         } catch (error) {
           logger.error("events-sync-catchup", `Failed to catch up events: ${error}`);
         }

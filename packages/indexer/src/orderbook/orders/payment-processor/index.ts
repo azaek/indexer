@@ -11,13 +11,16 @@ import { logger } from "@/common/logger";
 import { baseProvider } from "@/common/provider";
 import { bn, now, toBuffer } from "@/common/utils";
 import { config } from "@/config/index";
-import * as ordersUpdateById from "@/jobs/order-updates/by-id-queue";
 import { Sources } from "@/models/sources";
 import { offChainCheck } from "@/orderbook/orders/payment-processor/check";
 import { DbOrder, OrderMetadata, generateSchemaHash } from "@/orderbook/orders/utils";
 import * as tokenSet from "@/orderbook/token-sets";
 import * as royalties from "@/utils/royalties";
 import _ from "lodash";
+import {
+  orderUpdatesByIdJob,
+  OrderUpdatesByIdJobPayload,
+} from "@/jobs/order-updates/order-updates-by-id-job";
 
 export type OrderInfo = {
   orderParams: Sdk.PaymentProcessor.Types.BaseOrder;
@@ -41,14 +44,17 @@ export const save = async (orderInfos: OrderInfo[]): Promise<SaveResult[]> => {
 
   const handleOrder = async ({ orderParams, metadata }: OrderInfo) => {
     try {
-      const order = new Sdk.PaymentProcessor.Order(config.chainId, orderParams);
+      const order = new Sdk.PaymentProcessor.Order(config.chainId, {
+        ...orderParams,
+        // Force kind detection
+        kind: undefined,
+      });
       const id = order.hash();
 
-      // For now, only listings are supported
-      if (order.params.kind !== "sale-approval") {
+      if (!order.params.kind) {
         return results.push({
           id,
-          status: "unsupported-side",
+          status: "unknown-kind",
         });
       }
 
@@ -100,7 +106,12 @@ export const save = async (orderInfos: OrderInfo[]): Promise<SaveResult[]> => {
       }
 
       // Check: order has ETH as payment token
-      if (![Sdk.Common.Addresses.Eth[config.chainId]].includes(order.params.coin)) {
+      if (
+        ![
+          Sdk.Common.Addresses.Eth[config.chainId],
+          Sdk.Common.Addresses.Weth[config.chainId],
+        ].includes(order.params.coin)
+      ) {
         return results.push({
           id,
           status: "unsupported-payment-token",
@@ -155,6 +166,7 @@ export const save = async (orderInfos: OrderInfo[]): Promise<SaveResult[]> => {
       const schemaHash = metadata.schemaHash ?? generateSchemaHash(metadata.schema);
 
       switch (order.params.kind) {
+        case "offer-approval":
         case "sale-approval": {
           [{ id: tokenSetId }] = await tokenSet.singleToken.save([
             {
@@ -162,6 +174,18 @@ export const save = async (orderInfos: OrderInfo[]): Promise<SaveResult[]> => {
               schemaHash,
               contract: order.params.tokenAddress,
               tokenId: order.params.tokenId!,
+            },
+          ]);
+
+          break;
+        }
+
+        case "collection-offer-approval": {
+          [{ id: tokenSetId }] = await tokenSet.contractWide.save([
+            {
+              id: `contract:${order.params.tokenAddress}`,
+              schemaHash,
+              contract: order.params.tokenAddress,
             },
           ]);
 
@@ -176,7 +200,7 @@ export const save = async (orderInfos: OrderInfo[]): Promise<SaveResult[]> => {
         });
       }
 
-      const side = ["sale-approval"].includes(order.params.kind) ? "sell" : "buy";
+      const side = ["sale-approval"].includes(order.params.kind!) ? "sell" : "buy";
 
       // Handle: currency
       const currency = order.params.coin;
@@ -361,7 +385,7 @@ export const save = async (orderInfos: OrderInfo[]): Promise<SaveResult[]> => {
     );
     await idb.none(pgp.helpers.insert(orderValues, columns) + " ON CONFLICT DO NOTHING");
 
-    await ordersUpdateById.addToQueue(
+    await orderUpdatesByIdJob.addToQueue(
       results
         .filter((r) => r.status === "success" && !r.unfillable)
         .map(
@@ -372,7 +396,7 @@ export const save = async (orderInfos: OrderInfo[]): Promise<SaveResult[]> => {
               trigger: {
                 kind: "new-order",
               },
-            } as ordersUpdateById.OrderInfo)
+            } as OrderUpdatesByIdJobPayload)
         )
     );
   }

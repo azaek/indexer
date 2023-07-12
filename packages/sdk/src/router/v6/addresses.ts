@@ -46,6 +46,8 @@ export const ApprovalProxy: ChainIdToAddress = {
 export const PermitProxy: ChainIdToAddress = {
   [Network.Ethereum]: "0x104ff9a0e2a62aa531ef0cc9d19f948bde7062de",
   [Network.EthereumGoerli]: "0x104ff9a0e2a62aa531ef0cc9d19f948bde7062de",
+  [Network.Polygon]: "0x104ff9a0e2a62aa531ef0cc9d19f948bde7062de",
+  [Network.Mumbai]: "0x104ff9a0e2a62aa531ef0cc9d19f948bde7062de",
 };
 
 // Utility modules
@@ -172,7 +174,7 @@ export const CryptoPunksModule: ChainIdToAddress = {
 };
 
 export const PaymentProcessorModule: ChainIdToAddress = {
-  [Network.Ethereum]: "0x3a0d7a7a141171fc044b2ab9b7995b4a7b92b7dc",
-  [Network.EthereumGoerli]: "0x3a0d7a7a141171fc044b2ab9b7995b4a7b92b7dc",
-  [Network.EthereumSepolia]: "0x3a0d7a7a141171fc044b2ab9b7995b4a7b92b7dc",
+  [Network.Ethereum]: "0x929adee14d57019bfd4d092889abe3e2a647e706",
+  [Network.EthereumGoerli]: "0x929adee14d57019bfd4d092889abe3e2a647e706",
+  [Network.EthereumSepolia]: "0x929adee14d57019bfd4d092889abe3e2a647e706",
 };

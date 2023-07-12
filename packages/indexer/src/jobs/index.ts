@@ -6,18 +6,12 @@ import "@/jobs/arweave-relay";
 import "@/jobs/backfill";
 import "@/jobs/cache-check";
 import "@/jobs/collections-refresh";
-import "@/jobs/collection-updates";
 import "@/jobs/daily-volumes";
 import "@/jobs/data-archive";
-import "@/jobs/data-export";
 import "@/jobs/events-sync";
-import "@/jobs/nft-balance-updates";
 import "@/jobs/oracle";
-import "@/jobs/order-fixes";
 import "@/jobs/order-updates";
 import "@/jobs/orderbook";
-import "@/jobs/sources";
-import "@/jobs/token-updates";
 import "@/jobs/update-attribute";
 import "@/jobs/websocket-events";
 import "@/jobs/metrics";
@@ -54,25 +48,6 @@ import * as backfillNftTransferEventsUpdatedAt from "@/jobs/backfill/backfill-nf
 import * as eventsSyncRealtime from "@/jobs/events-sync/realtime-queue";
 import * as eventsSyncRealtimeV2 from "@/jobs/events-sync/realtime-queue-v2";
 
-import * as expiredMintsCron from "@/jobs/mints/cron/expired-mints";
-import * as mintsCheck from "@/jobs/mints/check";
-import * as mintsProcess from "@/jobs/mints/process";
-
-import * as updateNftBalanceFloorAskPrice from "@/jobs/nft-balance-updates/update-floor-ask-price-queue";
-import * as updateNftBalanceTopBid from "@/jobs/nft-balance-updates/update-top-bid-queue";
-
-import * as orderFixes from "@/jobs/order-fixes/fixes";
-import * as orderRevalidations from "@/jobs/order-fixes/revalidations";
-
-import * as orderUpdatesById from "@/jobs/order-updates/by-id-queue";
-import * as orderUpdatesByMaker from "@/jobs/order-updates/by-maker-queue";
-import * as dynamicOrdersCron from "@/jobs/order-updates/cron/dynamic-orders-queue";
-import * as erc20OrdersCron from "@/jobs/order-updates/cron/erc20-orders-queue";
-import * as expiredOrdersCron from "@/jobs/order-updates/cron/expired-orders-queue";
-import * as oracleOrdersCron from "@/jobs/order-updates/cron/oracle-orders-queue";
-import * as blurBidsBufferMisc from "@/jobs/order-updates/misc/blur-bids-buffer";
-import * as blurBidsRefreshMisc from "@/jobs/order-updates/misc/blur-bids-refresh";
-import * as blurListingsRefreshMisc from "@/jobs/order-updates/misc/blur-listings-refresh";
 import * as openSeaOffChainCancellations from "@/jobs/order-updates/misc/opensea-off-chain-cancellations";
 import * as saveBidEvents from "@/jobs/order-updates/save-bid-events";
 
@@ -83,8 +58,6 @@ import * as orderbookPostOrderExternalOpensea from "@/jobs/orderbook/post-order-
 
 import * as orderbookTokenSets from "@/jobs/orderbook/token-sets-queue";
 import * as orderbookOpenseaListings from "@/jobs/orderbook/opensea-listings-queue";
-
-import * as tokenUpdatesFloorAsk from "@/jobs/token-updates/floor-queue";
 
 import * as askWebsocketEventsTriggerQueue from "@/jobs/websocket-events/ask-websocket-events-trigger-queue";
 import * as bidWebsocketEventsTriggerQueue from "@/jobs/websocket-events/bid-websocket-events-trigger-queue";
@@ -153,6 +126,7 @@ import { processArchiveDataJob } from "@/jobs/data-archive/process-archive-data-
 import { exportDataJob } from "@/jobs/data-export/export-data-job";
 import { processActivityEventJob } from "@/jobs/activities/process-activity-event-job";
 import { savePendingActivitiesJob } from "@/jobs/activities/save-pending-activities-job";
+import { deleteArchivedExpiredBidActivitiesJob } from "@/jobs/activities/delete-archived-expired-bid-activities-job";
 import { eventsSyncFtTransfersWriteBufferJob } from "@/jobs/events-sync/write-buffers/ft-transfers-job";
 import { eventsSyncNftTransfersWriteBufferJob } from "@/jobs/events-sync/write-buffers/nft-transfers-job";
 import { eventsSyncProcessBackfillJob } from "@/jobs/events-sync/process/events-sync-process-backfill";
@@ -175,16 +149,28 @@ import { metadataIndexFetchJob } from "@/jobs/metadata-index/metadata-fetch-job"
 import { metadataIndexProcessJob } from "@/jobs/metadata-index/metadata-process-job";
 import { metadataIndexWriteJob } from "@/jobs/metadata-index/metadata-write-job";
 import { metadataIndexProcessBySlugJob } from "@/jobs/metadata-index/metadata-process-by-slug-job";
-
-export const gracefulShutdownJobWorkers = [
-  orderUpdatesById.worker,
-  orderUpdatesByMaker.worker,
-  dynamicOrdersCron.worker,
-  erc20OrdersCron.worker,
-  expiredOrdersCron.worker,
-  oracleOrdersCron.worker,
-  tokenUpdatesFloorAsk.worker,
-];
+import { mintsProcessJob } from "@/jobs/mints/mints-process-job";
+import { mintsRefreshJob } from "@/jobs/mints/mints-refresh-job";
+import { mintsCheckJob } from "@/jobs/mints/mints-check-job";
+import { mintsExpiredJob } from "@/jobs/mints/cron/mints-expired-job";
+import { nftBalanceUpdateFloorAskJob } from "@/jobs/nft-balance-updates/update-floor-ask-price-job";
+import { orderFixesJob } from "@/jobs/order-fixes/order-fixes-job";
+import { RabbitMq, RabbitMQMessage } from "@/common/rabbit-mq";
+import { orderRevalidationsJob } from "@/jobs/order-fixes/order-revalidations-job";
+import { orderUpdatesByIdJob } from "@/jobs/order-updates/order-updates-by-id-job";
+import { orderUpdatesDynamicOrderJob } from "@/jobs/order-updates/cron/dynamic-orders-job";
+import { orderUpdatesErc20OrderJob } from "@/jobs/order-updates/cron/erc20-orders-job";
+import { orderUpdatesExpiredOrderJob } from "@/jobs/order-updates/cron/expired-orders-job";
+import { orderUpdatesOracleOrderJob } from "@/jobs/order-updates/cron/oracle-orders-job";
+import { blurBidsBufferJob } from "@/jobs/order-updates/misc/blur-bids-buffer-job";
+import { blurBidsRefreshJob } from "@/jobs/order-updates/misc/blur-bids-refresh-job";
+import { blurListingsRefreshJob } from "@/jobs/order-updates/misc/blur-listings-refresh-job";
+import { orderUpdatesByMakerJob } from "@/jobs/order-updates/order-updates-by-maker-job";
+import { openseaOffChainCancellationsJob } from "@/jobs/order-updates/misc/opensea-off-chain-cancellations-job";
+import { orderbookOrdersJob } from "@/jobs/orderbook/orderbook-orders-job";
+import { openseaListingsJob } from "@/jobs/orderbook/opensea-listings-job";
+import { orderbookPostOrderExternalJob } from "@/jobs/orderbook/post-order-external/orderbook-post-order-external-job";
+import { orderbookPostOrderExternalOpenseaJob } from "@/jobs/orderbook/post-order-external/orderbook-post-order-external-opensea-job";
 
 export const allJobQueues = [
   backfillBlockTimestamps.queue,
@@ -212,25 +198,6 @@ export const allJobQueues = [
   eventsSyncRealtime.queue,
   eventsSyncRealtimeV2.queue,
 
-  expiredMintsCron.queue,
-  mintsCheck.queue,
-  mintsProcess.queue,
-
-  updateNftBalanceFloorAskPrice.queue,
-  updateNftBalanceTopBid.queue,
-
-  orderFixes.queue,
-  orderRevalidations.queue,
-
-  orderUpdatesById.queue,
-  orderUpdatesByMaker.queue,
-  dynamicOrdersCron.queue,
-  erc20OrdersCron.queue,
-  expiredOrdersCron.queue,
-  oracleOrdersCron.queue,
-  blurBidsBufferMisc.queue,
-  blurBidsRefreshMisc.queue,
-  blurListingsRefreshMisc.queue,
   openSeaOffChainCancellations.queue,
   saveBidEvents.queue,
 
@@ -241,8 +208,6 @@ export const allJobQueues = [
   orderbookPostOrderExternalOpensea.queue,
   orderbookTokenSets.queue,
   orderbookOpenseaListings.queue,
-
-  tokenUpdatesFloorAsk.queue,
 
   askWebsocketEventsTriggerQueue.queue,
   bidWebsocketEventsTriggerQueue.queue,
@@ -341,6 +306,28 @@ export class RabbitMqJobsConsumer {
       metadataIndexProcessJob,
       metadataIndexWriteJob,
       metadataIndexProcessBySlugJob,
+      mintsProcessJob,
+      mintsRefreshJob,
+      mintsCheckJob,
+      mintsExpiredJob,
+      nftBalanceUpdateFloorAskJob,
+      orderFixesJob,
+      orderRevalidationsJob,
+      orderUpdatesByIdJob,
+      orderUpdatesDynamicOrderJob,
+      orderUpdatesErc20OrderJob,
+      orderUpdatesExpiredOrderJob,
+      orderUpdatesOracleOrderJob,
+      blurBidsBufferJob,
+      blurBidsRefreshJob,
+      blurListingsRefreshJob,
+      deleteArchivedExpiredBidActivitiesJob,
+      orderUpdatesByMakerJob,
+      openseaOffChainCancellationsJob,
+      orderbookOrdersJob,
+      openseaListingsJob,
+      orderbookPostOrderExternalJob,
+      orderbookPostOrderExternalOpenseaJob,
     ];
   }
 
@@ -438,17 +425,25 @@ export class RabbitMqJobsConsumer {
       }
     );
 
-    channel.once("error", (error) => {
-      logger.error("rabbit-error", `Consumer channel error ${error}`);
+    channel.once("error", async (error) => {
+      logger.error("rabbit-channel", `Consumer channel error ${error}`);
 
       const jobs = RabbitMqJobsConsumer.channelsToJobs.get(channel);
       if (jobs) {
-        logger.error(
-          "rabbit-error",
-          `Jobs stopped consume ${JSON.stringify(
+        // Resubscribe the jobs
+        for (const job of jobs) {
+          await this.subscribe(job);
+        }
+
+        logger.info(
+          "rabbit-channel",
+          `Resubscribed to ${JSON.stringify(
             jobs.map((job: AbstractRabbitMqJobHandler) => job.queueName)
           )}`
         );
+
+        // Clear the channel that closed
+        RabbitMqJobsConsumer.channelsToJobs.delete(channel);
       }
     });
   }
@@ -488,5 +483,55 @@ export class RabbitMqJobsConsumer {
     } catch (error) {
       logger.error("rabbit-subscribe-connection", `failed to open connections to consume ${error}`);
     }
+  }
+
+  static async retryQueue(queueName: string) {
+    const job = _.find(RabbitMqJobsConsumer.getQueues(), (queue) => queue.getQueue() === queueName);
+
+    if (job) {
+      const deadLetterQueueSize = await RabbitMq.getQueueSize(job.getDeadLetterQueue());
+
+      // No messages in the dead letter queue
+      if (deadLetterQueueSize === 0) {
+        return 0;
+      }
+
+      const connection = await amqplib.connect(config.rabbitMqUrl);
+      const channel = await connection.createChannel();
+      let counter = 0;
+
+      await channel.prefetch(200);
+
+      // Subscribe to the dead letter queue
+      await new Promise<void>((resolve) =>
+        channel.consume(
+          job.getDeadLetterQueue(),
+          async (msg) => {
+            if (!_.isNull(msg)) {
+              await RabbitMq.send(
+                job.getRetryQueue(),
+                JSON.parse(msg.content.toString()) as RabbitMQMessage
+              );
+            }
+
+            ++counter;
+            if (counter >= deadLetterQueueSize) {
+              resolve();
+            }
+          },
+          {
+            noAck: true,
+            exclusive: true,
+          }
+        )
+      );
+
+      await channel.close();
+      await connection.close();
+
+      return counter;
+    }
+
+    return 0;
   }
 }
