@@ -62,7 +62,7 @@ import SudoswapV2ModuleAbi from "./abis/SudoswapV2Module.json";
 import CryptoPunksModuleAbi from "./abis/CryptoPunksModule.json";
 import PaymentProcessorModuleAbi from "./abis/PaymentProcessorModule.json";
 // Exchanges
-import BlurExchangeAbi from "../../blur/abis/Exchange.json";
+import BlurExchangeAbi from "../../blur-v2/abis/Exchange.json";
 import BlurSwapAbi from "../../blur/abis/Swap.json";
 import SeaportV15Abi from "../../seaport-v1.5/abis/Exchange.json";
 
@@ -412,52 +412,28 @@ export class Router {
               const seaportIface = new Interface(SeaportV15Abi);
 
               switch (true) {
-                case calldata.startsWith(blurExchangeIface.getSighash("execute")): {
-                  const decodedCalldata = blurExchangeIface.decodeFunctionData("execute", calldata);
-                  calldata = blurExchangeIface.encodeFunctionData("bulkExecute", [
-                    [
-                      // Original execution
-                      { sell: decodedCalldata.sell, buy: decodedCalldata.buy },
-                      // Fee executions
-                      ...(await Promise.all(
-                        fees.map((f) =>
-                          new Sdk.Blur.Exchange(this.chainId).generateBlurFeeExecutionInputs(
-                            this.provider,
-                            taker,
-                            Sdk.Blur.Types.TradeDirection.SELL,
-                            f.amount,
-                            f.recipient
-                          )
-                        )
-                      )),
-                    ],
-                  ]);
+                // TODO: Add support for `takeAskPool` and `takeAskSinglePool`
+                case calldata.startsWith(blurExchangeIface.getSighash("takeAsk")):
+                case calldata.startsWith(blurExchangeIface.getSighash("takeAskSingle")): {
+                  const blurTradeDetails = {
+                    marketId: "11",
+                    value: data.value,
+                    tradeData: calldata,
+                  };
 
-                  break;
-                }
-
-                case calldata.startsWith(blurExchangeIface.getSighash("bulkExecute")): {
-                  const decodedCalldata = blurExchangeIface.decodeFunctionData(
-                    "bulkExecute",
-                    calldata
+                  const encodedFeeTradeDetails = await Promise.all(
+                    fees.map((f) =>
+                      new Sdk.Blur.Exchange(this.chainId).generateBlurFeeTradeDetails(
+                        taker,
+                        f.amount,
+                        f.recipient
+                      )
+                    )
                   );
-                  calldata = blurExchangeIface.encodeFunctionData("bulkExecute", [
-                    [
-                      // Original executions
-                      ...decodedCalldata.executions,
-                      // Fee executions
-                      ...(await Promise.all(
-                        fees.map((f) =>
-                          new Sdk.Blur.Exchange(this.chainId).generateBlurFeeExecutionInputs(
-                            this.provider,
-                            taker,
-                            Sdk.Blur.Types.TradeDirection.SELL,
-                            f.amount,
-                            f.recipient
-                          )
-                        )
-                      )),
-                    ],
+
+                  calldata = blurSwapIface.encodeFunctionData("batchBuyWithETH", [
+                    blurTradeDetails,
+                    ...encodedFeeTradeDetails,
                   ]);
 
                   break;

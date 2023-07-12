@@ -2,7 +2,7 @@ import { Contract } from "@ethersproject/contracts";
 
 import * as Addresses from "./addresses";
 
-import ExchangeAbi from "./abis/BlurV2.json";
+import ExchangeAbi from "./abis/Exchange.json";
 
 export class Exchange {
   public chainId: number;
