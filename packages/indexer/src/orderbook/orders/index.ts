@@ -742,7 +742,7 @@ export const generateBidDetailsV6 = async (
 
       const response = await inject({
         method: "GET",
-        url: `/oracle/tokens/status/v2?tokens=${sdkOrder.params.tokenAddress}:${sdkOrder.params.tokenId}}`,
+        url: `/oracle/tokens/status/v2?tokens=${token.contract}:${token.tokenId}`,
         headers: {
           "Content-Type": "application/json",
         },
@@ -755,7 +755,7 @@ export const generateBidDetailsV6 = async (
         ...common,
         order: sdkOrder,
         extraArgs: {
-          stolenProof: messages[0],
+          stolenProof: messages[0].message,
         },
       };
     }
