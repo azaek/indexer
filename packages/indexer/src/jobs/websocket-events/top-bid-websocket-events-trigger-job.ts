@@ -12,6 +12,9 @@ import { redis } from "@/common/redis";
 
 export type TopBidWebsocketEventInfo = {
   orderId: string;
+  orderValue: string;
+  collectionId: string;
+  skipCollectionTopBidCheck: boolean;
 };
 
 export type TopBidWebSocketEventsTriggerJobPayload = {
