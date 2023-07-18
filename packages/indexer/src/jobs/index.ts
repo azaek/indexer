@@ -92,6 +92,7 @@ import { processActivityEventJob } from "@/jobs/activities/process-activity-even
 import { savePendingActivitiesJob } from "@/jobs/activities/save-pending-activities-job";
 import { deleteArchivedExpiredBidActivitiesJob } from "@/jobs/activities/delete-archived-expired-bid-activities-job";
 import { reindexActivitiesJob } from "@/jobs/activities/reindex-activities-job";
+import { monitorReindexActivitiesJob } from "@/jobs/activities/monitor-reindex-activities-job";
 
 import { eventsSyncFtTransfersWriteBufferJob } from "@/jobs/events-sync/write-buffers/ft-transfers-job";
 import { eventsSyncNftTransfersWriteBufferJob } from "@/jobs/events-sync/write-buffers/nft-transfers-job";
@@ -143,6 +144,7 @@ import { openseaOrdersFetchJob } from "@/jobs/opensea-orders/opensea-orders-fetc
 import { saveBidEventsJob } from "@/jobs/order-updates/save-bid-events-job";
 import { countApiUsageJob } from "@/jobs/metrics/count-api-usage-job";
 import { topBidWebSocketEventsTriggerJob } from "@/jobs/websocket-events/top-bid-websocket-events-trigger-job";
+import { backfillDeleteExpiredBidsElasticsearchJob } from "@/jobs/activities/backfill/backfill-delete-expired-bids-elasticsearch-job";
 
 export const allJobQueues = [
   backfillExpiredOrders.queue,
@@ -269,7 +271,9 @@ export class RabbitMqJobsConsumer {
       saveBidEventsJob,
       countApiUsageJob,
       topBidWebSocketEventsTriggerJob,
+      backfillDeleteExpiredBidsElasticsearchJob,
       reindexActivitiesJob,
+      monitorReindexActivitiesJob,
     ];
   }
 
@@ -367,31 +371,31 @@ export class RabbitMqJobsConsumer {
     );
 
     channel.once("error", async (error) => {
-      logger.error("rabbit-channel", `Consumer channel error ${error}`);
-
-      const jobs = RabbitMqJobsConsumer.channelsToJobs.get(channel);
-      if (jobs) {
-        // Resubscribe the jobs
-        for (const job of jobs) {
-          try {
-            await this.subscribe(job);
-          } catch (error) {
-            logger.error(
-              "rabbit-channel",
-              `Consumer channel failed to resubscribe to ${job.queueName} ${error}`
-            );
+      if (error.message.includes("timeout")) {
+        const jobs = RabbitMqJobsConsumer.channelsToJobs.get(channel);
+        if (jobs) {
+          // Resubscribe the jobs
+          for (const job of jobs) {
+            try {
+              await this.subscribe(job);
+            } catch (error) {
+              logger.error(
+                "rabbit-channel",
+                `Consumer channel failed to resubscribe to ${job.queueName} ${error}`
+              );
+            }
           }
+
+          logger.info(
+            "rabbit-channel",
+            `Resubscribed to ${JSON.stringify(
+              jobs.map((job: AbstractRabbitMqJobHandler) => job.queueName)
+            )}`
+          );
+
+          // Clear the channel that closed
+          RabbitMqJobsConsumer.channelsToJobs.delete(channel);
         }
-
-        logger.info(
-          "rabbit-channel",
-          `Resubscribed to ${JSON.stringify(
-            jobs.map((job: AbstractRabbitMqJobHandler) => job.queueName)
-          )}`
-        );
-
-        // Clear the channel that closed
-        RabbitMqJobsConsumer.channelsToJobs.delete(channel);
       }
     });
   }
