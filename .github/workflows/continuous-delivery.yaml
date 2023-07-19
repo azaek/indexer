@@ -68,7 +68,7 @@ jobs:
 
       - name: Post to Slack
         if: ${{ always() }}
-        id: slack
+        id: slack-build
         uses: unevenlabs/slack-github-action@v1.0.0
         with:
           channel-id: "ci"
@@ -104,26 +104,6 @@ jobs:
           token: ${{ secrets.DEVOPSBOT_TOKEN }}
           path: k8s-configs
 
-      # - name: Deploy to Dev Environment
-      #   working-directory: k8s-configs
-      #   run: |
-      #     ./utils/version_update.sh \
-      #       ./dev/platform/indexer-goerli.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-goerli
-      #     ./utils/version_update.sh \
-      #       ./dev/platform/indexer-worker-goerli.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-worker-goerli
-      #     ./utils/version_update.sh \
-      #       ./dev/platform/indexer-websocket-goerli.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-websocket-goerli
-      #     ./utils/version_update.sh \
-      #       ./dev/platform/indexer-kafka-worker-goerli.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-kafka-worker-goerli
-
   deploy-prod:
     name: Deploy to Production
     runs-on: ubuntu-latest
@@ -140,174 +120,25 @@ jobs:
           token: ${{ secrets.DEVOPSBOT_TOKEN }}
           path: k8s-configs
 
-      # - name: Deploy to Prod Environment
-      #   working-directory: k8s-configs
-      #   run: |
-      #     ./utils/version_update.sh \
-      #       ./prod/platform/indexer-api.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-api
-      #     ./utils/version_update.sh \
-      #       ./prod/platform/indexer-api-arbitrum.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-api-arbitrum
-      #     ./utils/version_update.sh \
-      #       ./prod/platform/indexer-api-optimism.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-api-optimism
-      #     ./utils/version_update.sh \
-      #       ./prod/platform/indexer-api-polygon.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-api-polygon
-      #     ./utils/version_update.sh \
-      #       ./prod/platform/indexer-api-bsc.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-api-bsc
-      #     ./utils/version_update.sh \
-      #       ./prod/platform/indexer-api-sepolia.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-api-sepolia
-      #     ./utils/version_update.sh \
-      #       ./prod/platform/indexer-api-mumbai.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-api-mumbai
-      #     ./utils/version_update.sh \
-      #       ./prod/platform/indexer-api-base-goerli.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-api-base-goerli
-      #     ./utils/version_update.sh \
-      #       ./prod/platform/indexer-api-arbitrum-nova.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-api-arbitrum-nova
-      #     ./utils/version_update.sh \
-      #       ./prod/platform/indexer-api-scroll-alpha.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-api-scroll-alpha
-      #     ./utils/version_update.sh \
-      #       ./prod/platform/indexer-api-zora-testnet.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-api-zora-testnet
-      #     ./utils/version_update.sh \
-      #       ./prod/platform/indexer-api-goerli.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-api-goerli
-      #     ./utils/version_update.sh \
-      #       ./prod/platform/indexer-api-zora.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-api-zora
-      #     ./utils/version_update.sh \
-      #       ./prod/platform/indexer-api-avalanche.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-api-avalanche
-      #     ./utils/version_update.sh \
-      #       ./prod/platform/indexer-api-base.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-api-base
-      #     ./utils/version_update.sh \
-      #       ./prod/platform/indexer-worker.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-worker
-      #     ./utils/version_update.sh \
-      #       ./prod/platform/indexer-worker-arbitrum.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-worker-arbitrum
-      #     ./utils/version_update.sh \
-      #       ./prod/platform/indexer-worker-master.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-worker-master
-      #     ./utils/version_update.sh \
-      #       ./prod/platform/indexer-worker-optimism.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-worker-optimism
-      #     ./utils/version_update.sh \
-      #       ./prod/platform/indexer-worker-polygon-1.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-worker-polygon-1
-      #     ./utils/version_update.sh \
-      #       ./prod/platform/indexer-worker-polygon-2.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-worker-polygon-2
-      #     ./utils/version_update.sh \
-      #       ./prod/platform/indexer-worker-polygon-3.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-worker-polygon-3
-      #     ./utils/version_update.sh \
-      #       ./prod/platform/indexer-worker-bsc-1.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-worker-bsc-1
-      #     ./utils/version_update.sh \
-      #       ./prod/platform/indexer-worker-bsc-2.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-worker-bsc-2
-      #     ./utils/version_update.sh \
-      #       ./prod/platform/indexer-worker-sepolia.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-worker-sepolia
-      #     ./utils/version_update.sh \
-      #       ./prod/platform/indexer-worker-mumbai.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-worker-mumbai
-      #     ./utils/version_update.sh \
-      #       ./prod/platform/indexer-worker-base-goerli.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-worker-base-goerli
-      #     ./utils/version_update.sh \
-      #       ./prod/platform/indexer-worker-arbitrum-nova.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-worker-arbitrum-nova
-      #     ./utils/version_update.sh \
-      #       ./prod/platform/indexer-worker-scroll-alpha.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-worker-scroll-alpha
-      #     ./utils/version_update.sh \
-      #       ./prod/platform/indexer-worker-zora-testnet.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-worker-zora-testnet
-      #     ./utils/version_update.sh \
-      #       ./prod/platform/indexer-worker-goerli.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-worker-goerli
-      #     ./utils/version_update.sh \
-      #       ./prod/platform/indexer-worker-zora.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-worker-zora
-      #     ./utils/version_update.sh \
-      #       ./prod/platform/indexer-worker-avalanche.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-worker-avalanche
-      #     ./utils/version_update.sh \
-      #       ./prod/platform/indexer-worker-base.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-worker-base
-      #     ./utils/version_update.sh \
-      #       ./prod/platform/indexer-websocket-ethereum.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-websocket-ethereum
-      #     ./utils/version_update.sh \
-      #       ./prod/platform/indexer-websocket-polygon.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-websocket-polygon
-      #     ./utils/version_update.sh \
-      #       ./prod/platform/indexer-websocket-goerli.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-websocket-goerli
-      #     ./utils/version_update.sh \
-      #       ./prod/platform/indexer-kafka-worker.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-kafka-worker
-      #     ./utils/version_update.sh \
-      #       ./prod/platform/indexer-worker-polygon-master.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-worker-polygon-master
-      #     ./utils/version_update.sh \
-      #       ./prod/platform/indexer-kafka-worker-polygon.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-kafka-worker-polygon
-      #     ./utils/version_update.sh \
-      #       ./prod/platform/indexer-kafka-worker-arbitrum.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-kafka-worker-arbitrum
-      #     ./utils/version_update.sh \
-      #       ./prod/platform/indexer-kafka-worker-optimism.yaml \
-      #       ${{ github.sha }} \
-      #       indexer-kafka-worker-optimism
+      - name: Post to Slack
+        if: ${{ always() }}
+        id: slack-deploy-prod
+        uses: unevenlabs/slack-github-action@v1.0.0
+        with:
+          channel-id: "ci"
+          update-ts: ${{ steps.slack-build.outputs.ts }}
+          payload: |
+            {
+              "text": "GitHub deploy prod result: <status-${{ job.status }}-status>\nAuthor: <author-${{ github.actor }}-author>\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "GitHub deploy prod result: <status-${{ job.status }}-status>\nAuthor: <author-${{ github.actor }}-author>\n${{ github.event.pull_request.html_url || github.event.head_commit.url }}"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
