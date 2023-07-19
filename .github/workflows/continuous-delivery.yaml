@@ -67,9 +67,9 @@ jobs:
       #   uses: cycjimmy/semantic-release-action@v3
 
       - name: Post to Slack
-        if: ${{ failure() }}
+        if: ${{ always() }}
         id: slack-build
-        uses: unevenlabs/slack-github-action@v1.0.0
+        uses: unevenlabs/slack-github-action@v1.0.1
         with:
           channel-id: "ci"
           payload: |
@@ -121,9 +121,9 @@ jobs:
           path: k8s-configs
 
       - name: Post to Slack
-        if: ${{ failure() }}
+        if: ${{ always() }}
         id: slack-deploy-prod
-        uses: unevenlabs/slack-github-action@v1.0.0
+        uses: unevenlabs/slack-github-action@v1.0.1
         with:
           channel-id: "ci"
           update-ts: ${{ steps.slack-build.outputs.ts }}
