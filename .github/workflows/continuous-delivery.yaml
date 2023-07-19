@@ -67,7 +67,7 @@ jobs:
       #   uses: cycjimmy/semantic-release-action@v3
 
       - name: Post to Slack
-        if: ${{ always() }}
+        if: ${{ failure() }}
         id: slack-build
         uses: unevenlabs/slack-github-action@v1.0.0
         with:
@@ -121,7 +121,7 @@ jobs:
           path: k8s-configs
 
       - name: Post to Slack
-        if: ${{ always() }}
+        if: ${{ failure() }}
         id: slack-deploy-prod
         uses: unevenlabs/slack-github-action@v1.0.0
         with:
