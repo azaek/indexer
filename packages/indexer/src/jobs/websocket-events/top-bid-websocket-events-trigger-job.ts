@@ -12,10 +12,7 @@ import { redis } from "@/common/redis";
 
 export type TopBidWebsocketEventInfo = {
   orderId: string;
-  orderValue: string;
-  collectionId?: string;
-  skipCollectionTopBidCheck: boolean;
-  collectionTopBidValue?: number | null;
+  isSingleTokenBid?: boolean;
 };
 
 export type TopBidWebSocketEventsTriggerJobPayload = {
@@ -30,28 +27,6 @@ export class TopBidWebSocketEventsTriggerJob extends AbstractRabbitMqJobHandler 
 
   protected async process(payload: TopBidWebSocketEventsTriggerJobPayload) {
     const { data } = payload;
-
-    if (!data.skipCollectionTopBidCheck) {
-      // if its a single token top bid, check if its lower than the top bid on the collection and skip if it is
-      if (
-        data.collectionTopBidValue &&
-        Number(data.collectionTopBidValue) > Number(data.orderValue)
-      ) {
-        logger.warn(
-          this.queueName,
-          `Top bid on collection is higher than current bid. data=${JSON.stringify(data)}`
-        );
-
-        return;
-      } else {
-        logger.info(
-          this.queueName,
-          `Top bid on collection is lower than current bid. data=${JSON.stringify(
-            data
-          )}, topBidOnCollection=${data.collectionTopBidValue}`
-        );
-      }
-    }
 
     try {
       const criteriaBuildQuery = Orders.buildCriteriaQuery("orders", "token_set_id", false);
@@ -85,7 +60,7 @@ export class TopBidWebSocketEventsTriggerJob extends AbstractRabbitMqJobHandler 
                 c.normalized_floor_sell_value AS normalized_floor_sell_value,
                 c.floor_sell_value AS floor_sell_value,
                 c.non_flagged_floor_sell_value AS non_flagged_floor_sell_value,
-                  
+                c.top_buy_value AS top_buy_value,
                 COALESCE(((orders.value / (c.floor_sell_value * (1-((COALESCE(c.royalties_bps, 0)::float + 250) / 10000)))::numeric(78, 0) ) - 1) * 100, 0) AS floor_difference_percentage
               FROM orders
               JOIN LATERAL (
@@ -95,7 +70,8 @@ export class TopBidWebSocketEventsTriggerJob extends AbstractRabbitMqJobHandler 
                 c.normalized_floor_sell_value,
                 c.floor_sell_value,
                 c.non_flagged_floor_sell_value,
-                c.royalties_bps
+                c.royalties_bps,
+                c.top_buy_value
                 FROM token_sets_tokens
               	JOIN tokens
                   ON token_sets_tokens.contract = tokens.contract
@@ -114,6 +90,19 @@ export class TopBidWebSocketEventsTriggerJob extends AbstractRabbitMqJobHandler 
         logger.warn(this.queueName, `Missing order. data=${JSON.stringify(data)}`);
 
         return;
+      }
+
+      if (data?.isSingleTokenBid) {
+        if (Number(order.value) < Number(order.top_buy_value)) {
+          logger.warn(
+            this.queueName,
+            `Order value is less than top bid value. data=${JSON.stringify(data)}, value=${
+              order.value
+            }, topBuyValue=${order.top_buy_value}`
+          );
+
+          return;
+        }
       }
 
       const payloads = [];

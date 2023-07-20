@@ -32,26 +32,6 @@ if (config.doBackgroundWork && config.doWebsocketServerWork) {
     async (job: Job) => {
       const { data } = job.data as EventInfo;
 
-      if (!data.skipCollectionTopBidCheck) {
-        // if its a single token top bid, check if its lower than the top bid on the collection and skip if it is
-        const topBidOnCollection = await redis.get(`collection-top-bid:${data.collectionId}`);
-        if (topBidOnCollection && Number(topBidOnCollection) > Number(data.orderValue)) {
-          logger.warn(
-            QUEUE_NAME,
-            `Top bid on collection is higher than current bid. data=${JSON.stringify(data)}`
-          );
-
-          return;
-        } else {
-          logger.info(
-            QUEUE_NAME,
-            `Top bid on collection is lower than current bid. data=${JSON.stringify(
-              data
-            )}, topBidOnCollection=${topBidOnCollection}`
-          );
-        }
-      }
-
       try {
         const criteriaBuildQuery = Orders.buildCriteriaQuery("orders", "token_set_id", false);
 
@@ -84,7 +64,7 @@ if (config.doBackgroundWork && config.doWebsocketServerWork) {
                 c.normalized_floor_sell_value AS normalized_floor_sell_value,
                 c.floor_sell_value AS floor_sell_value,
                 c.non_flagged_floor_sell_value AS non_flagged_floor_sell_value,
-                  
+                c.top_buy_value AS top_buy_value,
                 COALESCE(((orders.value / (c.floor_sell_value * (1-((COALESCE(c.royalties_bps, 0)::float + 250) / 10000)))::numeric(78, 0) ) - 1) * 100, 0) AS floor_difference_percentage
               FROM orders
               JOIN LATERAL (
@@ -94,7 +74,8 @@ if (config.doBackgroundWork && config.doWebsocketServerWork) {
                 c.normalized_floor_sell_value,
                 c.floor_sell_value,
                 c.non_flagged_floor_sell_value,
-                c.royalties_bps
+                c.royalties_bps,
+                c.top_buy_value
                 FROM token_sets_tokens
               	JOIN tokens
                   ON token_sets_tokens.contract = tokens.contract
@@ -262,9 +243,7 @@ export type EventInfo = {
 
 export type TopBidWebsocketEventInfo = {
   orderId: string;
-  orderValue: string;
-  collectionId: string;
-  skipCollectionTopBidCheck?: boolean;
+  isSingleTokenBid: boolean;
 };
 
 export const addToQueue = async (events: EventInfo[]) => {
