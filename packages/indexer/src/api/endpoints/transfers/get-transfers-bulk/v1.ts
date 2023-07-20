@@ -59,9 +59,8 @@ export const getTransfersBulkV1Options: RouteOptions = {
         .description("Amount of items returned in response. Max limit is 1000."),
       orderBy: Joi.string()
         .valid("timestamp", "updated_at")
-        .description(
-          "Order the items are returned in the response. Options are `timestamp`, and `updated_at`. Default is `timestamp`."
-        ),
+        .default("timestamp")
+        .description("Order the items are returned in the response."),
       continuation: Joi.string()
         .pattern(regex.base64)
         .description("Use continuation token to request next offset of items."),
@@ -97,7 +96,6 @@ export const getTransfersBulkV1Options: RouteOptions = {
   },
   handler: async (request: Request) => {
     const query = request.query as any;
-    query.orderBy = query.orderBy ?? "timestamp"; // Default order by is by timestamp
 
     try {
       let baseQuery = `
