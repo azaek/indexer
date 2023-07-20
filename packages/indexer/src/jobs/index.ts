@@ -146,6 +146,7 @@ import { saveBidEventsJob } from "@/jobs/order-updates/save-bid-events-job";
 import { countApiUsageJob } from "@/jobs/metrics/count-api-usage-job";
 import { transferWebsocketEventsTriggerQueueJob } from "@/jobs/websocket-events/transfer-websocket-events-trigger-job";
 import { topBidWebSocketEventsTriggerJob } from "@/jobs/websocket-events/top-bid-websocket-events-trigger-job";
+import { collectionWebsocketEventsTriggerQueueJob } from "@/jobs/websocket-events/collection-websocket-events-trigger-job";
 import { backfillDeleteExpiredBidsElasticsearchJob } from "@/jobs/activities/backfill/backfill-delete-expired-bids-elasticsearch-job";
 
 export const allJobQueues = [
@@ -274,6 +275,7 @@ export class RabbitMqJobsConsumer {
       countApiUsageJob,
       transferWebsocketEventsTriggerQueueJob,
       saleWebsocketEventsTriggerQueueJob,
+      collectionWebsocketEventsTriggerQueueJob,
       topBidWebSocketEventsTriggerJob,
       backfillDeleteExpiredBidsElasticsearchJob,
       reindexActivitiesJob,
