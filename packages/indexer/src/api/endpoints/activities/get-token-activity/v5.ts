@@ -5,7 +5,7 @@ import { Request, RouteOptions } from "@hapi/hapi";
 import Joi from "joi";
 import * as Sdk from "@reservoir0x/sdk";
 import { logger } from "@/common/logger";
-import { regex } from "@/common/utils";
+import { fromBuffer, regex, toBuffer } from "@/common/utils";
 import {
   getJoiActivityOrderObject,
   getJoiPriceObject,
@@ -16,6 +16,8 @@ import { config } from "@/config/index";
 
 import { ActivityType } from "@/elasticsearch/indexes/activities/base";
 import * as ActivitiesIndex from "@/elasticsearch/indexes/activities";
+import { idb, pgp } from "@/common/db";
+import tracer from "@/common/tracer";
 
 const version = "v5";
 
@@ -141,10 +143,54 @@ export const getTokenActivityV5Options: RouteOptions = {
         continuation: query.continuation,
       });
 
+      if (activities.length === 0) {
+        return { activities: [], continuation: null };
+      }
+
+      let tokensResult: any[] = [];
+
+      const getRealtimeTokensMetadata = Math.floor(Math.random() * 2);
+
+      if (getRealtimeTokensMetadata) {
+        let tokensToFetch = activities.map(
+          (activity) => `${activity.contract}:${activity.token?.id}`
+        );
+
+        // Make sure each token is unique
+        tokensToFetch = [...new Set(tokensToFetch).keys()];
+
+        // Fetch details for all tokens
+        tokensResult = await idb.manyOrNone(
+          `
+          SELECT
+            tokens.contract,
+            tokens.token_id,
+            tokens.name,
+            tokens.image
+          FROM tokens
+          WHERE (tokens.contract, tokens.token_id) IN (${pgp.helpers.values(
+            tokensToFetch.map((tokenToFetch) => ({
+              contract: toBuffer(tokenToFetch.split(":")[0]),
+              token_id: tokenToFetch.split(":")[1],
+            })),
+            ["contract", "token_id"]
+          )})
+        `
+        );
+      }
+
+      tracer.scope().active()?.setTag("getRealtimeTokensMetadata", getRealtimeTokensMetadata);
+
       const result = _.map(activities, async (activity) => {
         const currency = activity.pricing?.currency
           ? activity.pricing.currency
           : Sdk.Common.Addresses.Native[config.chainId];
+
+        const token = tokensResult?.find(
+          (token) =>
+            fromBuffer(token.contract) == activity.contract &&
+            `${token.token_id}` == activity.token?.id
+        );
 
         let order;
 
@@ -165,9 +211,9 @@ export const getTokenActivityV5Options: RouteOptions = {
 
             if (activity.order.criteria.kind === "token") {
               (orderCriteria as any).data.token = {
-                tokenId: activity.token?.id,
-                name: activity.token?.name,
-                image: activity.token?.image,
+                tokenId: token ? token.id : activity.token?.id,
+                name: token ? token.name : activity.token?.name,
+                image: token ? token.image : activity.token?.image,
               };
             }
 
@@ -214,9 +260,17 @@ export const getTokenActivityV5Options: RouteOptions = {
           createdAt: new Date(activity.createdAt).toISOString(),
           contract: activity.contract,
           token: {
-            tokenId: activity.token?.id,
-            tokenName: query.includeMetadata ? activity.token?.name : undefined,
-            tokenImage: query.includeMetadata ? activity.token?.image : undefined,
+            tokenId: token ? token.id : activity.token?.id,
+            tokenName: query.includeMetadata
+              ? token
+                ? token.name
+                : activity.token?.name
+              : undefined,
+            tokenImage: query.includeMetadata
+              ? token
+                ? token.image
+                : activity.token?.image
+              : undefined,
           },
           collection: {
             collectionId: activity.collection?.id,
