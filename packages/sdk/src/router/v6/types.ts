@@ -151,6 +151,10 @@ export type GenericOrder =
       order: Sdk.CaviarV1.Order;
     }
   | {
+      kind: "treasure";
+      order: Sdk.Treasure.Order;
+    }
+  | {
       kind: "payment-processor";
       order: Sdk.PaymentProcessor.Order;
     };

@@ -42,3 +42,22 @@ export const bidAccepted: EventData = {
     )`,
   ]),
 };
+
+export const itemListed: EventData = {
+  kind: "treasure",
+  subKind: "treasure-item-listed",
+  addresses: { [Treasure.Addresses.Exchange[config.chainId]?.toLowerCase()]: true },
+  topic: "0xb21f4a0122c6667aa16da06fcb7d9d3b2688164dfb40b7253aed80ea36d88e99",
+  numTopics: 1,
+  abi: new Interface([
+    `event ItemListed(
+      address seller, 
+      address nftAddress, 
+      uint256 tokenId, 
+      uint64 quantity, 
+      uint128 pricePerItem, 
+      uint64 expirationTime,
+      address paymentToken
+    )`,
+  ]),
+};
