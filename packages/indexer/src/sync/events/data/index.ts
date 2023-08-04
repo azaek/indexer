@@ -225,6 +225,7 @@ export type EventSubKind =
   | "zeroex-v3-fill"
   | "treasure-item-sold"
   | "treasure-bid-accepted"
+  | "treasure-item-listed"
   | "looks-rare-v2-new-bid-ask-nonces"
   | "looks-rare-v2-order-nonces-cancelled"
   | "looks-rare-v2-subset-nonces-cancelled"
@@ -451,6 +452,7 @@ const allEventData = [
   zeroExV2.fill,
   zeroExV3.fill,
   treasure.itemSold,
+  treasure.itemListed,
   blend.buyLocked,
   blend.loanOfferTaken,
   blend.refinance,

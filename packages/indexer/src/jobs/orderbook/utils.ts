@@ -154,6 +154,14 @@ export type GenericOrderInfo =
       validateBidValue?: boolean;
       ingestMethod?: "websocket" | "rest";
       ingestDelay?: number;
+    }
+  | {
+      kind: "treasure";
+      info: orders.treasure.OrderInfo;
+      relayToArweave?: boolean;
+      validateBidValue?: boolean;
+      ingestMethod?: "websocket" | "rest";
+      ingestDelay?: number;
     };
 
 export const processOrder = async (job: AbstractRabbitMqJobHandler, payload: GenericOrderInfo) => {
@@ -264,6 +272,11 @@ export const processOrder = async (job: AbstractRabbitMqJobHandler, payload: Gen
 
       case "caviar-v1": {
         result = await orders.caviarV1.save([info]);
+        break;
+      }
+
+      case "treasure": {
+        result = await orders.treasure.save([info]);
         break;
       }
     }

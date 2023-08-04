@@ -24,6 +24,7 @@ export * as sudoswapV2 from "@/orderbook/orders/sudoswap-v2";
 export * as midaswap from "@/orderbook/orders/midaswap";
 export * as caviarV1 from "@/orderbook/orders/caviar-v1";
 export * as paymentProcessor from "@/orderbook/orders/payment-processor";
+export * as treasure from "@/orderbook/orders/treasure";
 
 // Imports
 
@@ -191,6 +192,8 @@ export const getOrderSourceByOrderKind = async (
         return sources.getOrInsert("alienswap.xyz");
       case "collectionxyz":
         return sources.getOrInsert("collection.xyz");
+      case "treasure":
+        return sources.getOrInsert("treasure.lol");
       case "mint": {
         if (address && mintsSources.has(address)) {
           return sources.getOrInsert(mintsSources.get(address)!);
@@ -428,6 +431,14 @@ export const generateListingDetailsV6 = (
         kind: "caviar-v1",
         ...common,
         order: new Sdk.CaviarV1.Order(config.chainId, order.rawData),
+      };
+    }
+
+    case "treasure": {
+      return {
+        kind: "treasure",
+        ...common,
+        order: new Sdk.Treasure.Order(config.chainId, order.rawData),
       };
     }
 

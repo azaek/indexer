@@ -2,6 +2,7 @@ import { getEventData } from "@/events-sync/data";
 import { EnhancedEvent, OnChainData } from "@/events-sync/handlers/utils";
 import * as utils from "@/events-sync/utils";
 import { getUSDAndNativePrices } from "@/utils/prices";
+import { Result } from "@ethersproject/abi";
 
 export const handleEvents = async (events: EnhancedEvent[], onChainData: OnChainData) => {
   for (const { subKind, baseEventParams, log } of events) {
@@ -123,6 +124,52 @@ export const handleEvents = async (events: EnhancedEvent[], onChainData: OnChain
           maker,
           taker,
         });
+        break;
+      }
+      case "treasure-item-listed": {
+        const { args } = eventData.abi.parseLog(log);
+        const maker = args["seller"].toLowerCase();
+        const currency = args["paymentToken"].toLowerCase();
+        const tokenId = args["tokenId"].toString();
+        const tokenContract = args["nftAddress"].toLowerCase();
+        const currencyPrice = args["pricePerItem"].toString();
+        const expirationTime = args["expirationTime"].toString();
+        const amount = args["quantity"].toString();
+
+        const priceData = await getUSDAndNativePrices(
+          currency,
+          currencyPrice.toString(),
+          baseEventParams.timestamp
+        );
+        if (!priceData.nativePrice) {
+          // We must always have the native price
+          break;
+        }
+
+        const orderKind = "treasure";
+        const orderSide = "sell";
+        const attributionData = await utils.extractAttributionData(
+          baseEventParams.txHash,
+          orderKind
+        );
+
+        onChainData.orders.push({
+          kind: "treasure",
+          info: {
+            orderParams: {
+              maker,
+              nftAddress: tokenContract,
+              tokenId,
+              quantity: amount,
+              pricePerItem: currencyPrice,
+              paymentToken: currency,
+              expirationTime,
+            },
+            metadata: {},
+          },
+        });
+
+        break;
       }
     }
   }
