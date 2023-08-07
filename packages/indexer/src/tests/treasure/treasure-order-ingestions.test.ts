@@ -1,21 +1,21 @@
 import { config as dotEnvConfig } from "dotenv";
 dotEnvConfig();
 
-import { baseProvider } from "@/common/provider";
+//import { baseProvider } from "@/common/provider";
 import allTx from "./__fixtures__/tx";
-import { idb } from "@/common/db";
+//import { idb } from "@/common/db";
 import { parseTranscation } from "../utils/events";
 import { handleEvents } from "@/events-sync/handlers/treasure";
-import { processOnChainData } from "@/events-sync/handlers/utils";
-import { keccak256 } from "@ethersproject/solidity";
+//import { processOnChainData } from "@/events-sync/handlers/utils";
+////import { keccak256 } from "@ethersproject/solidity";
 
 describe("TreasureExchange", () => {
   test("create-ask", async () => {
-    const tx = await baseProvider.getTransactionReceipt(allTx.createAskTx);
+    //const tx = await baseProvider.getTransactionReceipt(allTx.createAskTx);
     const events = await parseTranscation(allTx.createAskTx);
-    console.log(events);
+    //console.log(events);
     const result = await handleEvents(events.events, events.allOnChainData[0]);
-    console.log(result);
+    //console.log(result);
     expect(result.orders?.length).toEqual(1);
   });
 

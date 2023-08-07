@@ -16,7 +16,7 @@ describe("Treasure Sales", () => {
     for (let index = 0; index < testCases.length; index++) {
       const testCase = testCases[index];
       const events = await getEnhancedEventsFromTx(testCase.tx);
-      console.log(events);
+      //console.log(events);
       const eventData = getEventData(["treasure-item-sold"])[0];
       const { args } = eventData.abi.parseLog(events[1].log);
       // console.log(
