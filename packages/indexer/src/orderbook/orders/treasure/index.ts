@@ -4,15 +4,15 @@ import pLimit from "p-limit";
 
 import { idb, pgp } from "@/common/db";
 import { logger } from "@/common/logger";
-import { bn, now, toBuffer } from "@/common/utils";
+import { now, toBuffer } from "@/common/utils";
 import { config } from "@/config/index";
 import { Sources } from "@/models/sources";
 import { keccak256 } from "@ethersproject/solidity";
 import { DbOrder, OrderMetadata, generateSchemaHash } from "@/orderbook/orders/utils";
 //import { offChainCheck } from "@/orderbook/orders/treasure/check";
-import * as tokenSet from "@/orderbook/token-sets";
-import * as royalties from "@/utils/royalties";
-import _, { get } from "lodash";
+////import * as tokenSet from "@/orderbook/token-sets";
+//mport * as royalties from "@/utils/royalties";
+//import _, { get } from "lodash";
 import {
   orderUpdatesByIdJob,
   OrderUpdatesByIdJobPayload,
