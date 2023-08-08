@@ -1,12 +1,12 @@
 import { AbstractRabbitMqJobHandler, BackoffStrategy } from "@/jobs/abstract-rabbit-mq-job-handler";
 import { unsyncEvents } from "@/events-sync/index";
 import { logger } from "@/common/logger";
-import { eventsSyncBackfillJob } from "@/jobs/events-sync/events-sync-backfill-job";
 import * as blocksModel from "@/models/blocks";
 import { baseProvider } from "@/common/provider";
 import { idb } from "@/common/db";
 import { fromBuffer } from "@/common/utils";
 import { HashZero } from "@ethersproject/constants";
+import { eventsSyncRealtimeJob } from "./events-sync-realtime-job";
 
 export type BlockCheckJobPayload = {
   block: number;
@@ -32,9 +32,10 @@ export class BlockCheckJob extends AbstractRabbitMqJobHandler {
       // Generic method for handling an orphan block
       const handleOrphanBlock = async (block: { number: number; hash: string }) => {
         // Resync the detected orphaned block
-        await eventsSyncBackfillJob.addToQueue(block.number, block.number, {
-          prioritized: true,
+        await eventsSyncRealtimeJob.addToQueue({
+          block: block.number,
         });
+
         await unsyncEvents(block.number, block.hash);
 
         // Delete the orphaned block from the `blocks` table
