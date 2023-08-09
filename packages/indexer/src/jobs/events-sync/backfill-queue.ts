@@ -107,7 +107,7 @@ export class EventsBackfillJob extends AbstractRabbitMqJobHandler {
         `Backfilling events from block ${fromBlock} to ${toBlock} with backfillId ${backfillId}`
       );
 
-      for (let i = fromBlock; i <= toBlock; i++) {
+      for (let i = fromBlock; i <= toBlock + 1; i++) {
         await eventsSyncHistoricalJob.addToQueue({
           block: i,
           syncEventsToMainDB: payload.syncEventsToMainDB,
