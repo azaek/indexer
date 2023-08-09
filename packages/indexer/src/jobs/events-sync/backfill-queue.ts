@@ -27,7 +27,10 @@ export class EventsBackfillJob extends AbstractRabbitMqJobHandler {
   protected async process(payload: EventsBackfillJobPayload) {
     try {
       let fromBlock, toBlock, maxBlock;
+      let backfillId;
+
       logger.info(this.queueName, `Processing payload: ${JSON.stringify(payload)}`);
+
 
       // initialize backfill
       if (payload.fromBlock && payload.toBlock && !payload.backfillId) {
@@ -36,7 +39,7 @@ export class EventsBackfillJob extends AbstractRabbitMqJobHandler {
           range = 1000;
         }
         // create backfillId
-        const backfillId = `${payload.fromBlock}-${payload.toBlock}-${range}-${Date.now()}`;
+        backfillId = `${payload.fromBlock}-${payload.toBlock}-${range}-${Date.now()}`;
         fromBlock = payload.fromBlock;
 
         // if fromBlock + range > payload.toBlock, fromBlock = payload.toBlock
@@ -96,7 +99,7 @@ export class EventsBackfillJob extends AbstractRabbitMqJobHandler {
 
       await this.addToQueue(
         {
-          backfillId: payload.backfillId,
+          backfillId: backfillId,
           syncEventsToMainDB: payload.syncEventsToMainDB,
         },
         30000
