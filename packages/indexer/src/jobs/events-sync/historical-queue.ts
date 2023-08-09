@@ -15,7 +15,7 @@ export class EventsSyncHistoricalJob extends AbstractRabbitMqJobHandler {
   queueName = "events-sync-historical";
   maxRetries = 30;
   concurrency = 50;
-  consumerTimeout = 60 * 1000;
+  consumerTimeout = 60 * 3000;
   backoff = {
     type: "fixed",
     delay: 1000,
