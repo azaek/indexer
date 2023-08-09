@@ -69,7 +69,7 @@ export class EventsBackfillJob extends AbstractRabbitMqJobHandler {
         // compare the status, if fromBlock >= toBlock, backfill portion finished, continue backfill next portion
         // if fromBlock < toBlock, continue backfill
         // if oldToBlock >= maxBlock, backfill finished
-        if (oldToBlock >= maxBlock) {
+        if (latestBlock >= maxBlock) {
           // backfill finished
           logger.info(this.queueName, `Backfill finished: ${backfillId}`);
           return;
