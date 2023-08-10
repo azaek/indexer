@@ -40,6 +40,7 @@ export class EventsBackfillJob extends AbstractRabbitMqJobHandler {
         await eventsSyncHistoricalJob.addToQueue({
           block: i,
           syncEventsToMainDB: payload.syncEventsToMainDB,
+          backfill: true,
         });
       }
       return;
