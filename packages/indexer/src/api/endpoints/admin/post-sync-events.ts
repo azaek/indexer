@@ -55,7 +55,6 @@ export const postSyncEventsOptions: RouteOptions = {
         fromBlock,
         toBlock,
         syncEventsToMainDB: payload?.syncEventsToMainDB,
-        range: payload?.range,
       });
 
       return { message: "Request accepted" };
