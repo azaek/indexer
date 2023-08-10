@@ -72,7 +72,7 @@ export const saveTransactions = async (transactions: Transaction[]) => {
     gas_fee: transaction.gasFee,
     max_fee_per_gas: transaction.maxFeePerGas,
     max_priority_fee_per_gas: transaction.maxPriorityFeePerGas,
-    cumulative_gas_used: transaction.cumulativeGasUsed,
+    cumulative_gas_used: Number(transaction.cumulativeGasUsed),
     contract_address: transaction?.contractAddress ? toBuffer(transaction.contractAddress) : null,
     logs_bloom: transaction?.logsBloom ? toBuffer(transaction.logsBloom) : null,
     status: transaction.status,
