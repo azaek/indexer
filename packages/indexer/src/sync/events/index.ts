@@ -358,7 +358,7 @@ const processEvents = async (logs: any[], blockData: BlockWithTransactions) => {
 
 export const syncEvents = async (block: number, syncEventsToMainDB = true) => {
   try {
-    logger.info("sync-events-v2", `Events realtime syncing block ${block}`);
+    // logger.info("sync-events-v2", `Events realtime syncing block ${block}`);
     const startSyncTime = Date.now();
     const blockData = await syncEventsUtils.fetchBlock(block);
 
@@ -391,6 +391,7 @@ export const syncEvents = async (block: number, syncEventsToMainDB = true) => {
 
     const endSyncTime = Date.now();
 
+    // eslint-disable-next-line
     const timings = {
       transactions: {
         count: blockData.transactions.length,
@@ -425,14 +426,14 @@ export const syncEvents = async (block: number, syncEventsToMainDB = true) => {
       blockSyncTime: endSaveBlocksTime - startSyncTime,
     };
 
-    logger.info(
-      "sync-events-timing-v2",
-      JSON.stringify({
-        message: `Events realtime syncing block ${block}`,
-        block,
-        ...timings,
-      })
-    );
+    // logger.info(
+    //   "sync-events-timing-v2",
+    //   JSON.stringify({
+    //     message: `Events realtime syncing block ${block}`,
+    //     block,
+    //     ...timings,
+    //   })
+    // );
   } catch (error) {
     logger.warn("sync-events-v2", `Events realtime syncing failed: ${error}, block: ${block}`);
     throw error;
