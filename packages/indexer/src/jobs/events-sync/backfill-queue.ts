@@ -11,6 +11,7 @@ export type EventsBackfillJobPayload = {
   toBlock?: number;
   backfillId?: string;
   syncEventsToMainDB?: boolean;
+  chunkSize?: number;
 };
 
 export class EventsBackfillJob extends AbstractRabbitMqJobHandler {
@@ -35,17 +36,17 @@ export class EventsBackfillJob extends AbstractRabbitMqJobHandler {
         return;
       }
 
-      const chunkCount = 100;
+      const chunkSize = payload.chunkSize || 300;
       // split backfill into chunks, each with their own backfillId. Chunk count is the number of chunks to split the backfill into
 
-      const range = Math.floor((payload.toBlock - payload.fromBlock) / chunkCount);
-      const remainder = (payload.toBlock - payload.fromBlock) % chunkCount;
+      const range = Math.floor((payload.toBlock - payload.fromBlock) / chunkSize);
+      const remainder = (payload.toBlock - payload.fromBlock) % chunkSize;
 
       let fromBlock = payload.fromBlock;
       let toBlock = payload.fromBlock + range;
 
-      for (let i = 0; i < chunkCount; i++) {
-        if (i === chunkCount - 1) {
+      for (let i = 0; i < chunkSize; i++) {
+        if (i === chunkSize - 1) {
           toBlock = payload.toBlock;
         }
 
