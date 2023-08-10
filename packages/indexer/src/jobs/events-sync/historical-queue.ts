@@ -44,8 +44,26 @@ export class EventsSyncHistoricalJob extends AbstractRabbitMqJobHandler {
         }
       }
     } catch (error) {
-      logger.warn(this.queueName, `Events historical syncing failed: ${error}`);
-      throw error;
+      logger.warn(
+        this.queueName,
+        `Events historical syncing failed: ${error}, block=${payload.block}`
+      );
+      // skip this block and move on to the next one if its greater than the latest block
+
+      if (payload.backfillId) {
+        const latestBlock = Number(await redis.get(`backfill:latestBlock:${payload.backfillId}`));
+        const maxBlock = Number(await redis.get(`backfill:maxBlock:${payload.backfillId}`));
+        if (payload.backfillId && payload.block > latestBlock && payload.block < maxBlock) {
+          await redis.set(`backfill:latestBlock:${payload.backfillId}`, `${latestBlock + 1}`);
+          await this.addToQueue({
+            block: latestBlock + 1,
+            syncEventsToMainDB: payload.syncEventsToMainDB,
+            backfillId: payload.backfillId,
+          });
+        }
+      }
+
+      // throw error;
     }
   }
 
