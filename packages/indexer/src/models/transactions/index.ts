@@ -76,7 +76,7 @@ export const saveTransactions = async (transactions: Transaction[]) => {
     contract_address: transaction?.contractAddress ? toBuffer(transaction.contractAddress) : null,
     logs_bloom: transaction?.logsBloom ? toBuffer(transaction.logsBloom) : null,
     status: transaction.status,
-    transaction_index: transaction.transactionIndex,
+    transaction_index: Number(transaction.transactionIndex),
   }));
 
   const chunks = _.chunk(transactionsValues, CHUNK_SIZE);
