@@ -36,7 +36,6 @@ export const postSyncEventsOptions: RouteOptions = {
       skipNonFillWrites: Joi.boolean().default(false),
       backfill: Joi.boolean().default(true),
       syncEventsToMainDB: Joi.boolean().default(true),
-      range: Joi.number().integer().positive(),
     }),
   },
   handler: async (request: Request) => {
