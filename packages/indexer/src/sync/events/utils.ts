@@ -162,10 +162,7 @@ export const getTracesFromBlock = async (blockNumber: number, retryMax = 10) => 
       await new Promise((resolve) => setTimeout(resolve, 200));
     }
   }
-  logger.info(
-    `get-traces-from-block`,
-    `Got traces from block ${blockNumber}, ${JSON.stringify(traces)}`
-  );
+
   return traces;
 };
 
