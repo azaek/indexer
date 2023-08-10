@@ -1,5 +1,7 @@
 import { logger } from "@/common/logger";
+import { RabbitMq } from "@/common/rabbit-mq";
 import { redis } from "@/common/redis";
+import { getNetworkName } from "@/config/network";
 import { AbstractRabbitMqJobHandler, BackoffStrategy } from "@/jobs/abstract-rabbit-mq-job-handler";
 import { eventsSyncHistoricalJob } from "@/jobs/events-sync/historical-queue";
 
@@ -66,6 +68,16 @@ export class EventsBackfillJob extends AbstractRabbitMqJobHandler {
           return;
         }
 
+        // queue size
+        const queueSize = await RabbitMq.getQueueSize(
+          eventsSyncHistoricalJob.queueName,
+          getNetworkName()
+        );
+
+        logger.info(
+          this.queueName,
+          `Processing backfill: ${backfillId}, fromBlock: ${oldFromBlock}, toBlock: ${oldToBlock}, latestBlock: ${latestBlock}, maxBlock: ${maxBlock}, queueSize: ${queueSize}`
+        );
         // compare the status, if fromBlock >= toBlock, backfill portion finished, continue backfill next portion
         // if fromBlock < toBlock, continue backfill
         // if oldToBlock >= maxBlock, backfill finished
@@ -73,7 +85,7 @@ export class EventsBackfillJob extends AbstractRabbitMqJobHandler {
           // backfill finished
           logger.info(this.queueName, `Backfill finished: ${backfillId}`);
           return;
-        } else if (latestBlock < oldToBlock) {
+        } else if (latestBlock < oldToBlock && queueSize !== 0) {
           // backfill not finished, add job to queue to check again later
           logger.info(
             this.queueName,
