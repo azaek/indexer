@@ -31,7 +31,18 @@ export class EventsBackfillJob extends AbstractRabbitMqJobHandler {
       let fromBlock, toBlock, maxBlock;
       let backfillId;
 
+      if (!payload.fromBlock || !payload.toBlock) {
+        return;
+      }
+
       logger.info(this.queueName, `Processing payload: ${JSON.stringify(payload)}`);
+      for (let i = payload.fromBlock; i <= payload.toBlock + 1; i++) {
+        await eventsSyncHistoricalJob.addToQueue({
+          block: i,
+          syncEventsToMainDB: payload.syncEventsToMainDB,
+        });
+      }
+      return;
 
       // initialize backfill
       if (payload.fromBlock && payload.toBlock && !payload.backfillId) {
