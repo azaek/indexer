@@ -148,11 +148,24 @@ export const fetchTransactionLogs = async (hash: string) => {
   return tx;
 };
 
-export const getTracesFromBlock = async (blockNumber: number) => {
-  const traces = await baseProvider.send("debug_traceBlockByNumber", [
-    blockNumberToHex(blockNumber),
-    { tracer: "callTracer" },
-  ]);
+export const getTracesFromBlock = async (blockNumber: number, retryMax = 10) => {
+  let traces: TransactionTrace[] | undefined;
+  let retries = 0;
+  while (!traces && retries < retryMax) {
+    try {
+      traces = await baseProvider.send("debug_traceBlockByNumber", [
+        blockNumberToHex(blockNumber),
+        { tracer: "callTracer" },
+      ]);
+    } catch (e) {
+      retries++;
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    }
+  }
+  logger.info(
+    `get-traces-from-block`,
+    `Got traces from block ${blockNumber}, ${JSON.stringify(traces)}`
+  );
   return traces;
 };
 
