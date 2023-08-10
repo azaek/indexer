@@ -38,10 +38,10 @@ export const saveTransactionLogs = async (transactionLogs: Log[]) => {
       values.push({
         hash: toBuffer(log.transactionHash),
         address: toBuffer(log.address),
-        block_number: log.blockNumber,
+        block_number: Number(log.blockNumber),
         block_hash: toBuffer(log.blockHash),
-        transaction_index: log.transactionIndex,
-        log_index: log.logIndex,
+        transaction_index: Number(log.transactionIndex),
+        log_index: Number(log.logIndex),
         data: toBuffer(log.data),
         topics: log.topics,
         removed: log.removed ? true : false,
