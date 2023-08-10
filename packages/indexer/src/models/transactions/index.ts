@@ -110,7 +110,10 @@ export const saveTransactions = async (transactions: Transaction[]) => {
       `
         );
       } catch (error) {
-        logger.error("sync-events", `Error saving transactions: ${error}`);
+        logger.error(
+          "sync-events",
+          `Error saving transactions: ${error}, ${JSON.stringify(chunk)}`
+        );
       }
     })
   );

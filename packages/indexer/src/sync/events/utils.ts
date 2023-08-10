@@ -207,8 +207,18 @@ export const _getTransactionReceiptsFromBlock = async (block: BlockWithTransacti
   };
 };
 
-export const getTransactionReceiptsFromBlock = async (blockNumber: number) => {
-  const receipts = await baseProvider.send("eth_getBlockReceipts", [blockNumberToHex(blockNumber)]);
+export const getTransactionReceiptsFromBlock = async (blockNumber: number, retryMax = 10) => {
+  let receipts: TransactionReceipt[] | undefined;
+  let retries = 0;
+  while (!receipts && retries < retryMax) {
+    try {
+      receipts = await baseProvider.send("eth_getBlockReceipts", [blockNumberToHex(blockNumber)]);
+    } catch (e) {
+      retries++;
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    }
+  }
+
   return receipts;
 };
 
