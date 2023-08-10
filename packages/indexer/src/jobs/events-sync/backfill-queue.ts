@@ -1,4 +1,5 @@
 import { logger } from "@/common/logger";
+import { redis } from "@/common/redis";
 // import { RabbitMq } from "@/common/rabbit-mq";
 // import { redis } from "@/common/redis";
 // import { getNetworkName } from "@/config/network";
@@ -8,7 +9,6 @@ import { eventsSyncHistoricalJob } from "@/jobs/events-sync/historical-queue";
 export type EventsBackfillJobPayload = {
   fromBlock?: number;
   toBlock?: number;
-  range?: number;
   backfillId?: string;
   syncEventsToMainDB?: boolean;
 };
@@ -35,12 +35,48 @@ export class EventsBackfillJob extends AbstractRabbitMqJobHandler {
         return;
       }
 
-      logger.info(this.queueName, `Processing payload: ${JSON.stringify(payload)}`);
-      for (let i = payload.fromBlock; i <= payload.toBlock + 1; i++) {
+      const chunkCount = 100;
+      // split backfill into chunks, each with their own backfillId. Chunk count is the number of chunks to split the backfill into
+
+      const range = Math.floor((payload.toBlock - payload.fromBlock) / chunkCount);
+      const remainder = (payload.toBlock - payload.fromBlock) % chunkCount;
+
+      let fromBlock = payload.fromBlock;
+      let toBlock = payload.fromBlock + range;
+
+      for (let i = 0; i < chunkCount; i++) {
+        if (i === chunkCount - 1) {
+          toBlock = payload.toBlock;
+        }
+
+        const backfillId = `${fromBlock}-${toBlock}-${Date.now()}`;
+        // set max block for this backfill, and latest block to the fromBlock
+        await redis.set(`backfill:maxBlock:${backfillId}`, `${toBlock}`);
+        await redis.set(`backfill:latestBlock:${backfillId}`, `${fromBlock - 1}`);
+
+        // add backfill to queue
         await eventsSyncHistoricalJob.addToQueue({
-          block: i,
+          block: fromBlock,
           syncEventsToMainDB: payload.syncEventsToMainDB,
-          backfill: true,
+          backfillId,
+        });
+
+        fromBlock = toBlock + 1;
+        toBlock = fromBlock + range;
+      }
+
+      // handle remainder
+      if (remainder > 0) {
+        const backfillId = `${fromBlock}-${payload.toBlock}-${Date.now()}`;
+        // set max block for this backfill, and latest block to the fromBlock
+        await redis.set(`backfill:maxBlock:${backfillId}`, `${payload.toBlock}`);
+        await redis.set(`backfill:latestBlock:${backfillId}`, `${fromBlock - 1}`);
+
+        // add backfill to queue
+        await eventsSyncHistoricalJob.addToQueue({
+          block: fromBlock,
+          syncEventsToMainDB: payload.syncEventsToMainDB,
+          backfillId,
         });
       }
       return;

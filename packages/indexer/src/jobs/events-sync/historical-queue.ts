@@ -8,7 +8,6 @@ import { redis } from "@/common/redis";
 export type EventsSyncHistoricalJobPayload = {
   block: number;
   syncEventsToMainDB?: boolean;
-  backfill?: boolean;
   backfillId?: string;
 };
 
@@ -32,7 +31,7 @@ export class EventsSyncHistoricalJob extends AbstractRabbitMqJobHandler {
 
       await syncEvents(block, syncEventsToMainDB);
 
-      if (payload.backfill && payload.backfillId) {
+      if (payload.backfillId) {
         const latestBlock = Number(await redis.get(`backfill:latestBlock:${payload.backfillId}`));
         const maxBlock = Number(await redis.get(`backfill:maxBlock:${payload.backfillId}`));
         if (block > latestBlock && block < maxBlock) {
@@ -40,7 +39,6 @@ export class EventsSyncHistoricalJob extends AbstractRabbitMqJobHandler {
           await this.addToQueue({
             block: block + 1,
             syncEventsToMainDB,
-            backfill: true,
             backfillId: payload.backfillId,
           });
         }
