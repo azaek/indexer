@@ -103,6 +103,7 @@ export const _getTransactionTraces = async (Txs: { hash: string }[], block: numb
         };
       });
     } catch (e) {
+      logger.error(`get-transactions-traces`, `Failed to get traces from block ${block}, ${e}`);
       traces = await getTracesFromHashes(Txs.map((tx) => tx.hash));
     }
   } else {
