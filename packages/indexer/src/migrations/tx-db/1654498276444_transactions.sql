@@ -23,7 +23,6 @@ CREATE TABLE "transactions" (
   "type" NUMERIC(78, 0) NOT NULL DEFAULT 0,
   "nonce" NUMERIC(78, 0) NOT NULL DEFAULT 0,
   "access_list" BYTEA,
-  "chain_id" NUMERIC(78, 0) NOT NULL DEFAULT 0,
   "r" BYTEA,
   "s" BYTEA,
   "v" BYTEA

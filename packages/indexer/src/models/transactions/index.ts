@@ -2,6 +2,7 @@ import _ from "lodash";
 import { txdb, pgp } from "@/common/db";
 import { fromBuffer, toBuffer } from "@/common/utils";
 import { logger } from "@/common/logger";
+import { AccessList } from "ethers/lib/utils";
 
 export type Transaction = {
   hash: string;
@@ -22,6 +23,12 @@ export type Transaction = {
   logsBloom?: string;
   status?: boolean;
   transactionIndex?: number;
+  type?: number | null | undefined;
+  nonce?: number;
+  accessList?: AccessList | undefined;
+  r?: string | undefined;
+  s?: string | undefined;
+  v?: number | undefined;
 };
 
 export const saveTransactions = async (transactions: Transaction[]) => {
@@ -44,16 +51,23 @@ export const saveTransactions = async (transactions: Transaction[]) => {
       "block_number",
       "block_hash",
       "block_timestamp",
+      "gas",
       "gas_price",
-      "gas_used",
-      "gas_fee",
       "max_fee_per_gas",
       "max_priority_fee_per_gas",
+      "gas_used",
       "cumulative_gas_used",
+      "effective_gas_price",
       "contract_address",
       "logs_bloom",
       "status",
       "transaction_index",
+      "type",
+      "nonce",
+      "access_list",
+      "r",
+      "s",
+      "v",
     ],
     { table: "transactions" }
   );
@@ -67,16 +81,23 @@ export const saveTransactions = async (transactions: Transaction[]) => {
     block_number: transaction.blockNumber,
     block_hash: toBuffer(transaction.blockHash),
     block_timestamp: transaction.blockTimestamp,
+    gas: transaction.gasPrice,
     gas_price: transaction.gasPrice,
-    gas_used: transaction.gasUsed,
-    gas_fee: transaction.gasFee,
     max_fee_per_gas: transaction.maxFeePerGas,
     max_priority_fee_per_gas: transaction.maxPriorityFeePerGas,
-    cumulative_gas_used: Number(transaction.cumulativeGasUsed),
+    gas_used: transaction.gasUsed,
+    cumulative_gas_used: transaction.cumulativeGasUsed,
+    effective_gas_price: transaction.gasPrice,
     contract_address: transaction?.contractAddress ? toBuffer(transaction.contractAddress) : null,
     logs_bloom: transaction?.logsBloom ? toBuffer(transaction.logsBloom) : null,
     status: transaction.status,
     transaction_index: Number(transaction.transactionIndex),
+    type: transaction.type,
+    nonce: transaction.nonce,
+    access_list: transaction.accessList,
+    r: transaction.r,
+    s: transaction.s,
+    v: transaction.v,
   }));
 
   const chunks = _.chunk(transactionsValues, CHUNK_SIZE);
@@ -87,24 +108,7 @@ export const saveTransactions = async (transactions: Transaction[]) => {
         await txdb.none(
           `
         INSERT INTO transactions (
-          hash,
-          "from",
-          "to",
-          value,
-          data,
-          block_number,
-          block_hash,
-          block_timestamp,
-          gas_price,
-          gas_used,
-          gas_fee,
-          max_fee_per_gas,
-          max_priority_fee_per_gas,
-          cumulative_gas_used,
-          contract_address,
-          logs_bloom,
-          status,
-          transaction_index
+          ${columns.names}
         ) VALUES ${pgp.helpers.values(chunk, columns)}
         ON CONFLICT DO NOTHING
       `
@@ -123,6 +127,7 @@ export const getTransaction = async (hash: string): Promise<Transaction> => {
   const result = await txdb.oneOrNone(
     `
       SELECT
+        transactions.hash,  
         transactions.from,
         transactions.to,
         transactions.value,
@@ -132,14 +137,17 @@ export const getTransaction = async (hash: string): Promise<Transaction> => {
         transactions.block_timestamp,
         transactions.gas_price,
         transactions.gas_used,
-        transactions.gas_fee,
         transactions.max_fee_per_gas,
         transactions.max_priority_fee_per_gas,
         transactions.cumulative_gas_used,
-        transactions.contract_address,
-        transactions.logs_bloom,
         transactions.status,
-        transactions.transaction_index
+        transactions.transaction_index,
+        transactions.type,
+        transactions.nonce,
+        transactions.access_list,
+        transactions.r,
+        transactions.s,
+        transactions.v
       FROM transactions
       WHERE transactions.hash = $/hash/
     `,
@@ -153,16 +161,21 @@ export const getTransaction = async (hash: string): Promise<Transaction> => {
     value: result.value,
     data: fromBuffer(result.data),
     blockNumber: result.block_number,
-    blockHash: result.block_hash,
+    blockHash: fromBuffer(result.block_hash),
     blockTimestamp: result.block_timestamp,
     gasPrice: result.gas_price,
     gasUsed: result.gas_used,
-    gasFee: result.gas_fee,
     maxFeePerGas: result.max_fee_per_gas,
     maxPriorityFeePerGas: result.max_priority_fee_per_gas,
     cumulativeGasUsed: result.cumulative_gas_used,
     status: result.status,
     transactionIndex: result.transaction_index,
+    type: result.type,
+    nonce: result.nonce,
+    accessList: result.access_list,
+    r: result.r,
+    s: result.s,
+    v: result.v,
   };
 };
 
