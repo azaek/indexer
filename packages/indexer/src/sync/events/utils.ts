@@ -52,11 +52,6 @@ export const saveBlockTransactions = async (
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const txRaw = tx.raw as any;
-    const gasPrice = tx.gasPrice?.toString();
-    const gasUsed = txRaw?.gas ? bn(txRaw.gas).toString() : undefined;
-    const gasFee = gasPrice && gasUsed ? bn(gasPrice).mul(gasUsed).toString() : undefined;
-    const maxFeePerGas = tx.maxFeePerGas?.toString() || undefined;
-    const maxPriorityFeePerGas = tx.maxPriorityFeePerGas?.toString() || undefined;
 
     return {
       hash: tx.hash.toLowerCase(),
@@ -67,16 +62,23 @@ export const saveBlockTransactions = async (
       blockNumber: blockData.number,
       blockHash: blockData.hash.toLowerCase(),
       blockTimestamp: blockData.timestamp,
-      gasPrice,
-      gasUsed,
-      gasFee,
-      maxFeePerGas,
-      maxPriorityFeePerGas,
+      gasPrice: tx.gasPrice?.toString() || undefined,
+      gasLimit: tx.gasLimit.toString(),
+      gas: txRaw?.gas ? bn(txRaw.gas).toString() : undefined,
+      maxFeePerGas: tx.maxFeePerGas?.toString() || undefined,
+      maxPriorityFeePerGas: tx.maxPriorityFeePerGas?.toString() || undefined,
       cumulativeGasUsed: txReceipt.cumulativeGasUsed.toString(),
       contractAddress: txReceipt.contractAddress?.toLowerCase(),
       logsBloom: txReceipt.logsBloom,
       status: txReceipt.status === 1,
       transactionIndex: txReceipt.transactionIndex,
+      type: tx.type,
+      nonce: tx.nonce,
+      gasUsed: txReceipt.gasUsed.toString(),
+      accessList: tx.accessList,
+      r: tx.r,
+      s: tx.s,
+      v: tx.v,
     };
   });
 
