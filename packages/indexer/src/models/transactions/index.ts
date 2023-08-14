@@ -95,7 +95,7 @@ export const saveTransactions = async (transactions: Transaction[]) => {
     transaction_index: Number(transaction.transactionIndex),
     type: transaction.type,
     nonce: transaction.nonce,
-    access_list: transaction.accessList ? JSON.stringify(transaction.accessList) : [],
+    access_list: transaction.accessList ? JSON.stringify(transaction.accessList) : "[]",
     r: transaction.r ? toBuffer(transaction.r) : null,
     s: transaction.s ? toBuffer(transaction.s) : null,
     v: transaction.v,
