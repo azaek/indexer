@@ -32,10 +32,15 @@ export class EventsSyncHistoricalJob extends AbstractRabbitMqJobHandler {
       await syncEvents(block, syncEventsToMainDB);
 
       if (payload.backfillId) {
-        const latestBlock = Number(await redis.get(`backfill:latestBlock:${payload.backfillId}`));
-        const maxBlock = Number(await redis.get(`backfill:maxBlock:${payload.backfillId}`));
+        const latestBlock = Number(
+          (await redis.zrevrange(`backfill:${payload.backfillId}`, 0, 0, "WITHSCORES"))[1]
+        );
+        const maxBlock = Number(
+          (await redis.zrange(`backfill:${payload.backfillId}`, 0, 0, "WITHSCORES"))[1]
+        );
+
         if (block > latestBlock && block < maxBlock) {
-          await redis.set(`backfill:latestBlock:${payload.backfillId}`, `${block}`);
+          await redis.zadd(`backfill:${payload.backfillId}`, `${block}`, "fromBlock");
           await this.addToQueue({
             block: block + 1,
             syncEventsToMainDB,
@@ -51,10 +56,16 @@ export class EventsSyncHistoricalJob extends AbstractRabbitMqJobHandler {
       // skip this block and move on to the next one if its greater than the latest block
 
       if (payload.backfillId) {
-        const latestBlock = Number(await redis.get(`backfill:latestBlock:${payload.backfillId}`));
-        const maxBlock = Number(await redis.get(`backfill:maxBlock:${payload.backfillId}`));
+        const latestBlock = Number(
+          (await redis.zrevrange(`backfill:${payload.backfillId}`, 0, 0, "WITHSCORES"))[1]
+        );
+        const maxBlock = Number(
+          (await redis.zrange(`backfill:${payload.backfillId}`, 0, 0, "WITHSCORES"))[1]
+        );
+
+        await redis.sadd(`backfill:failed:${payload.backfillId}`, `${payload.block}`);
         if (payload.backfillId && payload.block > latestBlock && payload.block < maxBlock) {
-          await redis.set(`backfill:latestBlock:${payload.backfillId}`, `${latestBlock + 1}`);
+          await redis.zadd(`backfill:${payload.backfillId}`, `${latestBlock + 1}`, "fromBlock");
           await this.addToQueue({
             block: latestBlock + 1,
             syncEventsToMainDB: payload.syncEventsToMainDB,
