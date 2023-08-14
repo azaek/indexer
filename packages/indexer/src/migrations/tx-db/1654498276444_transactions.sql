@@ -25,7 +25,7 @@ CREATE TABLE "transactions" (
   "access_list" BYTEA,
   "r" BYTEA,
   "s" BYTEA,
-  "v" BYTEA
+  "v" NUMERIC(78, 0) NOT NULL DEFAULT 0,
 );
 
 ALTER TABLE "transactions"
