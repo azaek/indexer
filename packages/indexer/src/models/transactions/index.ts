@@ -19,6 +19,7 @@ export type Transaction = {
   maxFeePerGas?: string;
   maxPriorityFeePerGas?: string;
   cumulativeGasUsed?: string;
+  effectiveGasPrice?: string;
   contractAddress?: string;
   logsBloom?: string;
   status?: boolean;
@@ -87,7 +88,7 @@ export const saveTransactions = async (transactions: Transaction[]) => {
     max_priority_fee_per_gas: transaction.maxPriorityFeePerGas,
     gas_used: transaction.gasUsed,
     cumulative_gas_used: transaction.cumulativeGasUsed,
-    effective_gas_price: transaction.gasPrice,
+    effective_gas_price: transaction.effectiveGasPrice,
     contract_address: transaction?.contractAddress ? toBuffer(transaction.contractAddress) : null,
     logs_bloom: transaction?.logsBloom ? toBuffer(transaction.logsBloom) : null,
     status: transaction.status,
