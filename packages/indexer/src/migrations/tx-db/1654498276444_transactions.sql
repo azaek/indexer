@@ -22,10 +22,10 @@ CREATE TABLE "transactions" (
   "transaction_index" NUMERIC(78, 0) NOT NULL DEFAULT 0,
   "type" NUMERIC(78, 0) NOT NULL DEFAULT 0,
   "nonce" NUMERIC(78, 0) NOT NULL DEFAULT 0,
-  "access_list" jsonb,
+  "access_list" JSONB,
   "r" BYTEA,
   "s" BYTEA,
-  "v" NUMERIC(78, 0) NOT NULL DEFAULT 0,
+  "v" NUMERIC(78, 0) NOT NULL DEFAULT 0
 );
 
 ALTER TABLE "transactions"
