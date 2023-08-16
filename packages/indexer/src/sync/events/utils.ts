@@ -274,7 +274,10 @@ export const processContractAddresses = async (traces: TransactionTrace[]) => {
   await saveContractAddresses(contractAddresses);
 
   contractAddresses.forEach(async (ca) => {
-    collectionNewContractDeployedJob.addToQueue({ contract: ca.address });
+    collectionNewContractDeployedJob.addToQueue({
+      contract: ca.address,
+      deployer: ca.deploymentSender,
+    });
   });
 };
 

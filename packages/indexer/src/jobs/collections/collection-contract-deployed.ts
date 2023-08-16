@@ -1,12 +1,13 @@
 import { AbstractRabbitMqJobHandler } from "@/jobs/abstract-rabbit-mq-job-handler";
 
-import { detectTokenStandard, getContractNameAndSymbol, getContractOwner } from "./utils";
+import { detectTokenStandard, getContractNameAndSymbol } from "./utils";
 import { logger } from "@/common/logger";
 import { idb } from "@/common/db";
 import { toBuffer } from "@/common/utils";
 
 export type CollectionContractDeployed = {
   contract: string;
+  deployer: string;
 };
 
 export class CollectionNewContractDeployedJob extends AbstractRabbitMqJobHandler {
@@ -16,7 +17,12 @@ export class CollectionNewContractDeployedJob extends AbstractRabbitMqJobHandler
   persistent = false;
 
   protected async process(payload: CollectionContractDeployed) {
-    const { contract } = payload;
+    const { contract, deployer } = payload;
+
+    if (!contract || !deployer) {
+      logger.error(this.queueName, `Missing contract or deployer`);
+      return;
+    }
 
     // get the type of the collection, either ERC721 or ERC1155. if it's not one of those, we don't care
     // get this from the contract itself
@@ -36,10 +42,7 @@ export class CollectionNewContractDeployedJob extends AbstractRabbitMqJobHandler
         return;
     }
 
-    const [contractOwner, contractName] = await Promise.all([
-      getContractOwner(contract),
-      getContractNameAndSymbol(contract),
-    ]);
+    const contractName = await getContractNameAndSymbol(contract);
 
     await Promise.all([
       idb.none(
@@ -75,7 +78,7 @@ export class CollectionNewContractDeployedJob extends AbstractRabbitMqJobHandler
           id: contract,
           name: contractName || null,
           contract: toBuffer(contract),
-          creator: contractOwner,
+          creator: deployer,
         }
       ),
     ]);

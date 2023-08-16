@@ -44,27 +44,6 @@ export async function detectTokenStandard(contractAddress: string) {
   }
 }
 
-export async function getContractOwner(contractAddress: string) {
-  const provider = new ethers.providers.JsonRpcProvider(config.baseNetworkHttpUrl);
-  const contract = new ethers.Contract(
-    contractAddress,
-    [...erc721Interface.fragments, ...erc1155Interface.fragments],
-    provider
-  );
-
-  try {
-    const owner = await contract.owner();
-    return owner;
-  } catch (error) {
-    logger.error(
-      "onchain-fetcher",
-      `getOwner error. contractAddress:${contractAddress}, error:${error}`
-    );
-
-    return "Unknown";
-  }
-}
-
 export async function getContractNameAndSymbol(contractAddress: string) {
   const provider = new ethers.providers.JsonRpcProvider(config.baseNetworkHttpUrl);
   const contract = new ethers.Contract(
