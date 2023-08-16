@@ -22,6 +22,7 @@ import { extractNestedTx } from "@/events-sync/handlers/attribution";
 import { getTransactionLogs } from "@/models/transaction-logs";
 import { supports_eth_getBlockReceipts, supports_eth_getBlockTrace } from "./supports";
 import { logger } from "@/common/logger";
+import { collectionNewContractDeployedJob } from "@/jobs/collections/collection-contract-deployed";
 
 export const fetchBlock = async (blockNumber: number) => {
   const block = await baseProvider.getBlockWithTransactions(blockNumber);
@@ -271,6 +272,10 @@ export const processContractAddresses = async (traces: TransactionTrace[]) => {
   contractAddresses = contractAddresses.filter((ca) => ca);
 
   await saveContractAddresses(contractAddresses);
+
+  contractAddresses.forEach(async (ca) => {
+    collectionNewContractDeployedJob.addToQueue({ contract: ca.address });
+  });
 };
 
 export const extractAttributionData = async (

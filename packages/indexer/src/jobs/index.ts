@@ -148,6 +148,7 @@ import { backfillSaveActivitiesElasticsearchJob } from "@/jobs/activities/backfi
 import { pendingExpiredOrdersCheckJob } from "@/jobs/orderbook/cron/pending-expired-orders-check-job";
 import { eventsSyncHistoricalJob } from "./events-sync/historical-queue";
 import { eventsBackfillJob } from "./events-sync/backfill-queue";
+import { collectionNewContractDeployedJob } from "./collections/collection-contract-deployed";
 
 export const allJobQueues = [
   backfillExpiredOrders.queue,
@@ -220,6 +221,7 @@ export class RabbitMqJobsConsumer {
       updateCollectionDailyVolumeJob,
       collectionRefreshJob,
       collectionRefreshCacheJob,
+      collectionNewContractDeployedJob,
       currenciesFetchJob,
       oneDayVolumeJob,
       dailyVolumeJob,
