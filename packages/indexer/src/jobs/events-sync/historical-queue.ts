@@ -35,6 +35,9 @@ export class EventsSyncHistoricalJob extends AbstractRabbitMqJobHandler {
         this.queueName,
         `Events historical syncing failed: ${error}, block=${payload.block}`
       );
+
+      // add failed block to redis
+      await redis.lpush(`failedBackfillBlocks`, `${payload.block}`);
     }
     await this.addNextBlockToQueue(payload);
   }
@@ -42,17 +45,23 @@ export class EventsSyncHistoricalJob extends AbstractRabbitMqJobHandler {
   public async addNextBlockToQueue(payload: EventsSyncHistoricalJobPayload) {
     const { block, syncEventsToMainDB } = payload;
     if (payload.batchBackfillId) {
-      const latestBlock = Number(await redis.get(`backfill:${payload.batchBackfillId}:fromBlock`));
-      const maxBlock = Number(await redis.get(`backfill:${payload.batchBackfillId}:toBlock`));
+      // const latestBlock = Number(await redis.get(`backfill:${payload.batchBackfillId}:fromBlock`));
+      // const maxBlock = Number(await redis.get(`backfill:${payload.batchBackfillId}:toBlock`));
 
-      if (block > latestBlock - 1 && block < maxBlock) {
-        await redis.set(`backfill:${payload.batchBackfillId}:fromBlock`, `${block}`);
-        await this.addToQueue({
-          block: block + 1,
-          syncEventsToMainDB,
-          batchBackfillId: payload.batchBackfillId,
-        });
-      }
+      // if (block > latestBlock - 1 && block < maxBlock) {
+      //   // await redis.set(`backfill:${payload.batchBackfillId}:fromBlock`, `${block}`);
+      //   await this.addToQueue({
+      //     block: block + 1,
+      //     syncEventsToMainDB,
+      //     batchBackfillId: payload.batchBackfillId,
+      //   });
+      // }
+
+      await this.addToQueue({
+        block: block + 1,
+        syncEventsToMainDB,
+        batchBackfillId: payload.batchBackfillId,
+      });
     }
   }
 

@@ -75,9 +75,9 @@ export class EventsBackfillJob extends AbstractRabbitMqJobHandler {
 
         const batchBackfillId = `${fromBlock}-${toBlock}-${Date.now()}`;
         // add batch backfill id to a list of backfill ids
-        await redis.rpush(`backfillIds:${backfillId}`, batchBackfillId);
-        await redis.set(`backfill:${batchBackfillId}:fromBlock`, `${fromBlock}`);
-        await redis.set(`backfill:${batchBackfillId}:toBlock`, `${toBlock}`);
+        // await redis.rpush(`backfillIds:${backfillId}`, batchBackfillId);
+        // await redis.set(`backfill:${batchBackfillId}:fromBlock`, `${fromBlock}`);
+        // await redis.set(`backfill:${batchBackfillId}:toBlock`, `${toBlock}`);
 
         // add backfill to queue
         await eventsSyncHistoricalJob.addToQueue({
@@ -97,9 +97,9 @@ export class EventsBackfillJob extends AbstractRabbitMqJobHandler {
 
         const batchBackfillId = `${fromBlock}-${toBlock}-${Date.now()}`;
         // add batch backfill id to a list of backfill ids
-        await redis.rpush("backfillIds", batchBackfillId);
-        await redis.set(`backfill:${batchBackfillId}:fromBlock`, `${fromBlock}`);
-        await redis.set(`backfill:${batchBackfillId}:toBlock`, `${toBlock}`);
+        // await redis.rpush("backfillIds", batchBackfillId);
+        // await redis.set(`backfill:${batchBackfillId}:fromBlock`, `${fromBlock}`);
+        // await redis.set(`backfill:${batchBackfillId}:toBlock`, `${toBlock}`);
 
         // add backfill to queue
         await eventsSyncHistoricalJob.addToQueue({
