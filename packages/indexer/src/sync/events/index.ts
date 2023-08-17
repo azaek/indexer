@@ -360,7 +360,7 @@ export const syncEvents = async (block: number, syncEventsToMainDB = true) => {
     const blockData = await syncEventsUtils.fetchBlock(block);
 
     if (!blockData) {
-      logger.warn("sync-events-v2", `Block ${block} not found`);
+      logger.warn("sync-events-timing-historical", `Block ${block} not found`);
       throw new Error(`Block ${block} not found`);
     }
 
@@ -432,7 +432,10 @@ export const syncEvents = async (block: number, syncEventsToMainDB = true) => {
       })
     );
   } catch (error) {
-    logger.warn("sync-events-v2", `Events realtime syncing failed: ${error}, block: ${block}`);
+    logger.warn(
+      "sync-events-timing-historical",
+      `Events realtime syncing failed: ${error}, block: ${block}`
+    );
     throw error;
   }
 };
