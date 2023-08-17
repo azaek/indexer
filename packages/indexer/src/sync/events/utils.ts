@@ -62,6 +62,7 @@ export const fetchBlock = async (blockNumber: number, retryMax = 10) => {
         blockNumber: Number(tx.blockNumber),
         transactionIndex: Number(tx.transactionIndex),
         gasUsed: tx?.gasUsed ? bn(tx.gasUsed).toString() : undefined,
+        type: tx?.type ? Number(tx.type) : 0,
       };
     }),
   };
@@ -91,31 +92,28 @@ export const saveBlockTransactions = async (
         `Could not find transaction ${txReceipt.transactionHash} in block ${blockData.number}`
       );
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const txRaw = tx.raw as any;
-
     return {
       hash: tx.hash.toLowerCase(),
       from: tx.from.toLowerCase(),
       to: (tx.to || AddressZero).toLowerCase(),
       value: tx.value.toString(),
-      data: tx?.data.toLowerCase() || undefined,
+      data: tx?.data.toLowerCase(),
       blockNumber: blockData.number,
       blockHash: blockData.hash.toLowerCase(),
       blockTimestamp: blockData.timestamp,
-      gas: txRaw?.gas || undefined,
-      gasPrice: tx?.gasPrice || undefined,
-      maxFeePerGas: tx?.maxFeePerGas || undefined,
-      maxPriorityFeePerGas: tx?.maxPriorityFeePerGas || undefined,
-      cumulativeGasUsed: txReceipt?.cumulativeGasUsed.toString() || undefined,
-      effectiveGasPrice: txReceipt?.effectiveGasPrice.toString() || undefined,
-      contractAddress: txReceipt?.contractAddress.toLowerCase() || undefined,
+      gas: tx?.gas,
+      gasPrice: tx?.gasPrice,
+      maxFeePerGas: tx?.maxFeePerGas,
+      maxPriorityFeePerGas: tx?.maxPriorityFeePerGas,
+      cumulativeGasUsed: txReceipt?.cumulativeGasUsed.toString(),
+      effectiveGasPrice: txReceipt?.effectiveGasPrice.toString(),
+      contractAddress: txReceipt?.contractAddress.toLowerCase(),
       logsBloom: txReceipt.logsBloom,
       status: txReceipt.status === 1,
       transactionIndex: txReceipt.transactionIndex,
       type: tx.type,
       nonce: tx.nonce,
-      gasUsed: txReceipt?.gasUsed.toString() || undefined,
+      gasUsed: txReceipt?.gasUsed.toString(),
       accessList: tx.accessList,
       r: tx.r,
       s: tx.s,
