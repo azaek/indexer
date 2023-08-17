@@ -7,6 +7,10 @@ import { RabbitMq } from "@/common/rabbit-mq";
 import { acquireLock, redis } from "@/common/redis";
 import { config } from "@/config/index";
 import { logger } from "@/common/logger";
+// import { syncEvents } from "@/events-sync/index";
+
+// // eslint-disable-next-line
+// console.log("Starting indexer");
 
 if (process.env.LOCAL_TESTING) {
   import("./setup");
@@ -33,3 +37,5 @@ if (process.env.LOCAL_TESTING) {
       logger.error("rabbit-publisher-connect", `Error connecting to rabbit ${error}`);
     });
 }
+
+// syncEvents(11423415, false);

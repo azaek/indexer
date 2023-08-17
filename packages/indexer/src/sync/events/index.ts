@@ -14,7 +14,7 @@ import { eventsSyncRealtimeJob } from "@/jobs/events-sync/events-sync-realtime-j
 import { removeUnsyncedEventsActivitiesJob } from "@/jobs/activities/remove-unsynced-events-activities-job";
 import { deleteTransactionLogs, saveTransactionLogs } from "@/models/transaction-logs";
 import {
-  TransactionTrace,
+  TransactionTraceManyCalls,
   deleteTransactionTraces,
   saveTransactionTraces,
 } from "@/models/transaction-traces";
@@ -277,7 +277,7 @@ const getBlockSyncData = async (blockData: blocksModel.BlockWithTransactions) =>
 const saveLogsAndTracesAndTransactions = async (
   blockData: blocksModel.BlockWithTransactions,
   transactionReceipts: TransactionReceipt[],
-  traces: TransactionTrace[]
+  traces: TransactionTraceManyCalls[]
 ) => {
   const transactionLogs: {
     hash: string;
@@ -355,7 +355,10 @@ const processEvents = async (logs: any[], blockData: blocksModel.BlockWithTransa
 
 export const syncEvents = async (block: number, syncEventsToMainDB = true) => {
   try {
-    // logger.info("sync-events-v2", `Events realtime syncing block ${block}`);
+    // // eslint-disable-next-line
+    // console.log(`Syncing block ${block}`);
+
+    logger.info("sync-events-v2", `Events realtime syncing block ${block}`);
     const startSyncTime = Date.now();
     const blockData = await syncEventsUtils.fetchBlock(block);
 
@@ -423,14 +426,14 @@ export const syncEvents = async (block: number, syncEventsToMainDB = true) => {
       blockSyncTime: endSaveBlocksTime - startSyncTime,
     };
 
-    // logger.info(
-    //   "sync-events-timing-historical",
-    //   JSON.stringify({
-    //     message: `Events historical syncing block ${block}`,
-    //     block,
-    //     ...timings,
-    //   })
-    // );
+    logger.info(
+      "sync-events-timing-historical",
+      JSON.stringify({
+        message: `Events historical syncing block ${block}`,
+        block,
+        ...timings,
+      })
+    );
   } catch (error) {
     logger.warn(
       "sync-events-timing-historical",
