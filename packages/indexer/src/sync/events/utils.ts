@@ -127,7 +127,7 @@ export const getTransactionTraceFromRPC = async (hash: string, retryMax = 10) =>
   let retries = 0;
   while (!trace && retries < retryMax) {
     try {
-      trace = await baseProvider.send("debug_traceTransaction", [hash, { tracer: "callTracer" }]);
+      trace = await baseProvider.send("trace_transaction", [hash, { tracer: "callTracer" }]);
     } catch (e) {
       retries++;
       await new Promise((resolve) => setTimeout(resolve, 200));
