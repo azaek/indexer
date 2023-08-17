@@ -9,7 +9,6 @@ import * as es from "@/events-sync/storage";
 import * as syncEventsUtils from "@/events-sync/utils";
 import * as blocksModel from "@/models/blocks";
 import getUuidByString from "uuid-by-string";
-import { BlockWithTransactions } from "@ethersproject/abstract-provider";
 import { eventsSyncRealtimeJob } from "@/jobs/events-sync/events-sync-realtime-job";
 
 import { removeUnsyncedEventsActivitiesJob } from "@/jobs/activities/remove-unsynced-events-activities-job";
@@ -252,7 +251,7 @@ export const extractEventsBatches = (enhancedEvents: EnhancedEvent[]): EventsBat
   return [...txHashToEventsBatch.values()];
 };
 
-const getBlockSyncData = async (blockData: BlockWithTransactions) => {
+const getBlockSyncData = async (blockData: blocksModel.BlockWithTransactions) => {
   const [
     { traces, getTransactionTracesTime },
     { transactionReceipts, getTransactionReceiptsTime },
@@ -261,9 +260,7 @@ const getBlockSyncData = async (blockData: BlockWithTransactions) => {
     syncEventsUtils._getTransactionTraces(blockData.transactions, blockData.number),
     syncEventsUtils._getTransactionReceiptsFromBlock(blockData),
     blocksModel._saveBlock({
-      number: blockData.number,
-      hash: blockData.hash,
-      timestamp: blockData.timestamp,
+      ...blockData,
     }),
   ]);
 
@@ -278,7 +275,7 @@ const getBlockSyncData = async (blockData: BlockWithTransactions) => {
 };
 
 const saveLogsAndTracesAndTransactions = async (
-  blockData: BlockWithTransactions,
+  blockData: blocksModel.BlockWithTransactions,
   transactionReceipts: TransactionReceipt[],
   traces: TransactionTrace[]
 ) => {
@@ -317,7 +314,7 @@ const saveLogsAndTracesAndTransactions = async (
   };
 };
 
-const processEvents = async (logs: any[], blockData: BlockWithTransactions) => {
+const processEvents = async (logs: any[], blockData: blocksModel.BlockWithTransactions) => {
   const availableEventData = getEventData();
   let enhancedEvents = logs
     .map((log) => {
@@ -363,7 +360,7 @@ export const syncEvents = async (block: number, syncEventsToMainDB = true) => {
     const blockData = await syncEventsUtils.fetchBlock(block);
 
     if (!blockData) {
-      logger.warn("sync-events-v2", `Block ${block} not found`);
+      logger.warn("sync-events-timing-historical", `Block ${block} not found`);
       throw new Error(`Block ${block} not found`);
     }
 
@@ -426,16 +423,19 @@ export const syncEvents = async (block: number, syncEventsToMainDB = true) => {
       blockSyncTime: endSaveBlocksTime - startSyncTime,
     };
 
-    logger.info(
-      "sync-events-timing-historical",
-      JSON.stringify({
-        message: `Events historical syncing block ${block}`,
-        block,
-        ...timings,
-      })
-    );
+    // logger.info(
+    //   "sync-events-timing-historical",
+    //   JSON.stringify({
+    //     message: `Events historical syncing block ${block}`,
+    //     block,
+    //     ...timings,
+    //   })
+    // );
   } catch (error) {
-    logger.warn("sync-events-v2", `Events realtime syncing failed: ${error}, block: ${block}`);
+    logger.warn(
+      "sync-events-timing-historical",
+      `Events realtime syncing failed: ${error}, block: ${block}`
+    );
     throw error;
   }
 };

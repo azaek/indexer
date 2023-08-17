@@ -6,7 +6,6 @@ import { baseProvider } from "@/common/provider";
 import { Transaction, getTransaction, saveTransactions } from "@/models/transactions";
 import { TransactionReceipt } from "@ethersproject/providers";
 
-import { BlockWithTransactions } from "@ethersproject/abstract-provider";
 import { TransactionTrace } from "@/models/transaction-traces";
 import { ContractAddress, saveContractAddresses } from "@/models/contract_addresses";
 import { CallTrace } from "@georgeroman/evm-tx-simulator/dist/types";
@@ -20,11 +19,54 @@ import { getRouters } from "@/utils/routers";
 import { Sources } from "@/models/sources";
 import { extractNestedTx } from "@/events-sync/handlers/attribution";
 import { getTransactionLogs } from "@/models/transaction-logs";
-import { supports_eth_getBlockReceipts, supports_eth_getBlockTrace } from "./supports";
+import { supports_eth_getBlockReceipts } from "./supports";
 import { logger } from "@/common/logger";
+import { BlockWithTransactions } from "@/models/blocks";
 
-export const fetchBlock = async (blockNumber: number) => {
-  const block = await baseProvider.getBlockWithTransactions(blockNumber);
+export const fetchBlock = async (blockNumber: number, retryMax = 10) => {
+  let block: BlockWithTransactions | undefined;
+  let retries = 0;
+  while (!block && retries < retryMax) {
+    try {
+      block = await baseProvider.send("eth_getBlockByNumber", [
+        blockNumberToHex(blockNumber),
+        true,
+      ]);
+    } catch (e) {
+      retries++;
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    }
+  }
+  if (!block) {
+    return null;
+  }
+
+  block = {
+    ...block,
+    number: Number(block.number),
+    timestamp: Number(block.timestamp),
+    gasLimit: Number(block.gasLimit),
+    gasUsed: Number(block.gasUsed),
+    size: Number(block.size),
+    transactions: block.transactions.map((tx) => {
+      return {
+        ...tx,
+        nonce: Number(tx.nonce),
+        gas: tx?.gas ? bn(tx.gas).toString() : undefined,
+        gasPrice: tx?.gasPrice ? bn(tx.gasPrice).toString() : undefined,
+        maxFeePerGas: tx?.maxFeePerGas ? bn(tx.maxFeePerGas).toString() : undefined,
+        maxPriorityFeePerGas: tx?.maxPriorityFeePerGas
+          ? bn(tx.maxPriorityFeePerGas).toString()
+          : undefined,
+        value: tx.value.toString(),
+        blockNumber: Number(tx.blockNumber),
+        transactionIndex: Number(tx.transactionIndex),
+        gasUsed: tx?.gasUsed ? bn(tx.gasUsed).toString() : undefined,
+        type: tx?.type ? Number(tx.type) : 0,
+      };
+    }),
+  };
+
   return block;
 };
 
@@ -50,71 +92,83 @@ export const saveBlockTransactions = async (
         `Could not find transaction ${txReceipt.transactionHash} in block ${blockData.number}`
       );
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const txRaw = tx.raw as any;
-
-    return {
-      hash: tx.hash.toLowerCase(),
-      from: tx.from.toLowerCase(),
-      to: (tx.to || AddressZero).toLowerCase(),
-      value: tx.value.toString(),
-      data: tx.data.toLowerCase(),
-      blockNumber: blockData.number,
-      blockHash: blockData.hash.toLowerCase(),
-      blockTimestamp: blockData.timestamp,
-      gas: txRaw?.gas ? bn(txRaw.gas).toString() : undefined,
-      gasPrice: tx.gasPrice?.toString() || undefined,
-      maxFeePerGas: tx.maxFeePerGas?.toString() || undefined,
-      maxPriorityFeePerGas: tx.maxPriorityFeePerGas?.toString() || undefined,
-      cumulativeGasUsed: txReceipt.cumulativeGasUsed.toString(),
-      effectiveGasPrice: txReceipt.effectiveGasPrice?.toString() || undefined,
-      contractAddress: txReceipt.contractAddress?.toLowerCase(),
-      logsBloom: txReceipt.logsBloom,
-      status: txReceipt.status === 1,
-      transactionIndex: txReceipt.transactionIndex,
-      type: tx.type,
-      nonce: tx.nonce,
-      gasUsed: txReceipt.gasUsed.toString(),
-      accessList: tx.accessList,
-      r: tx.r,
-      s: tx.s,
-      v: tx.v,
-    };
+    try {
+      return {
+        hash: tx.hash,
+        from: tx.from,
+        to: tx.to || AddressZero,
+        value: tx.value.toString(),
+        data: tx?.input,
+        blockNumber: blockData.number,
+        blockHash: blockData.hash,
+        blockTimestamp: blockData.timestamp,
+        gas: tx?.gas,
+        gasPrice: tx?.gasPrice,
+        maxFeePerGas: tx?.maxFeePerGas,
+        maxPriorityFeePerGas: tx?.maxPriorityFeePerGas,
+        cumulativeGasUsed: txReceipt?.cumulativeGasUsed?.toString(),
+        effectiveGasPrice: txReceipt?.effectiveGasPrice?.toString(),
+        contractAddress: txReceipt?.contractAddress,
+        logsBloom: txReceipt.logsBloom,
+        status: txReceipt.status === 1,
+        transactionIndex: txReceipt.transactionIndex,
+        type: tx.type,
+        nonce: tx.nonce,
+        gasUsed: txReceipt?.gasUsed?.toString(),
+        accessList: tx.accessList,
+        r: tx.r,
+        s: tx.s,
+        v: tx.v,
+      };
+    } catch (e) {
+      logger.error(
+        "save-block-transactions",
+        `Failed to save transaction ${tx.hash} ${JSON.stringify({
+          tx,
+          txReceipt,
+          blockData,
+        })}, ${e}`
+      );
+      return null;
+    }
   });
 
   // Save all transactions within the block
-  await saveTransactions(transactions);
+  await saveTransactions(transactions.filter((tx) => tx !== null) as Transaction[]);
 };
 
 export const fetchTransaction = async (hash: string) => {
   const tx = await getTransaction(hash);
   return tx;
 };
-export const _getTransactionTraces = async (Txs: { hash: string }[], block: number) => {
+export const _getTransactionTraces = async (
+  Txs: BlockWithTransactions["transactions"],
+  // eslint-disable-next-line
+  _block: number
+) => {
   const timerStart = Date.now();
-  let traces;
-  if (supports_eth_getBlockTrace) {
-    try {
-      traces = (await getTracesFromBlock(block)) as TransactionTrace[];
+  let traces: TransactionTrace[] = [];
+  // if (supports_eth_getBlockTrace) {
+  //   try {
+  //     traces = (await getTracesFromBlock(block)) as TransactionTrace[];
 
-      // traces don't have the transaction hash, so we need to add it by using the txs array we are passing in by using the index of the trace
-      traces = traces.map((trace, index) => {
-        return {
-          ...trace,
-          hash: Txs[index].hash,
-        };
-      });
-    } catch (e) {
-      logger.error(`get-transactions-traces`, `Failed to get traces from block ${block}, ${e}`);
-      traces = await getTracesFromHashes(Txs.map((tx) => tx.hash));
-    }
-  } else {
-    traces = await getTracesFromHashes(Txs.map((tx) => tx.hash));
-  }
-
-  traces = traces.filter((trace) => trace !== null) as TransactionTrace[];
-
+  //     // traces don't have the transaction hash, so we need to add it by using the txs array we are passing in by using the index of the trace
+  //     traces = traces.map((trace, index) => {
+  //       return {
+  //         ...trace,
+  //         hash: Txs[index].hash,
+  //       };
+  //     });
+  //   } catch (e) {
+  //     logger.error(`get-transactions-traces`, `Failed to get traces from block ${block}, ${e}`);
+  //     traces = await getTracesFromHashes(Txs.map((tx) => tx.hash));
+  //   }
+  // } else {
+  traces = await getTracesFromHashes(Txs.map((tx) => tx.hash));
+  // }
   const timerEnd = Date.now();
+
+  traces = traces.filter((trace: TransactionTrace | null) => trace !== null) as TransactionTrace[];
 
   return {
     traces,
@@ -168,8 +222,8 @@ export const getTracesFromBlock = async (blockNumber: number, retryMax = 10) => 
   return traces;
 };
 
-export const getTracesFromHashes = async (txHashes: string[]) => {
-  const traces = await Promise.all(
+export const getTracesFromHashes = async (txHashes: string[]): Promise<TransactionTrace[]> => {
+  let traces = await Promise.all(
     txHashes.map(async (txHash) => {
       const trace = await getTransactionTraceFromRPC(txHash);
       if (!trace) {
@@ -183,7 +237,11 @@ export const getTracesFromHashes = async (txHashes: string[]) => {
       };
     })
   );
-  return traces;
+
+  // remove null traces
+  traces = traces.filter((trace: TransactionTrace | null) => trace !== null);
+
+  return traces as TransactionTrace[];
 };
 
 export const _getTransactionReceiptsFromBlock = async (block: BlockWithTransactions) => {

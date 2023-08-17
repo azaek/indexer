@@ -8,13 +8,13 @@ import { redis } from "@/common/redis";
 export type EventsSyncHistoricalJobPayload = {
   block: number;
   syncEventsToMainDB?: boolean;
-  backfillId?: string;
+  batchBackfillId?: string;
 };
 
 export class EventsSyncHistoricalJob extends AbstractRabbitMqJobHandler {
   queueName = "events-sync-historical";
   maxRetries = 30;
-  concurrency = 1;
+  concurrency = 10;
   consumerTimeout = 60 * 3000;
   backoff = {
     type: "fixed",
@@ -30,51 +30,29 @@ export class EventsSyncHistoricalJob extends AbstractRabbitMqJobHandler {
       const { block, syncEventsToMainDB } = payload;
 
       await syncEvents(block, syncEventsToMainDB);
-
-      if (payload.backfillId) {
-        const latestBlock = Number(
-          (await redis.zrevrange(`backfill:${payload.backfillId}`, 0, 0, "WITHSCORES"))[1]
-        );
-        const maxBlock = Number(
-          (await redis.zrange(`backfill:${payload.backfillId}`, 0, 0, "WITHSCORES"))[1]
-        );
-
-        if (block > latestBlock && block < maxBlock) {
-          await redis.zadd(`backfill:${payload.backfillId}`, `${block}`, "fromBlock");
-          await this.addToQueue({
-            block: block + 1,
-            syncEventsToMainDB,
-            backfillId: payload.backfillId,
-          });
-        }
-      }
     } catch (error) {
       logger.warn(
         this.queueName,
         `Events historical syncing failed: ${error}, block=${payload.block}`
       );
-      // skip this block and move on to the next one if its greater than the latest block
+    }
+    await this.addNextBlockToQueue(payload);
+  }
 
-      if (payload.backfillId) {
-        const latestBlock = Number(
-          (await redis.zrevrange(`backfill:${payload.backfillId}`, 0, 0, "WITHSCORES"))[1]
-        );
-        const maxBlock = Number(
-          (await redis.zrange(`backfill:${payload.backfillId}`, 0, 0, "WITHSCORES"))[1]
-        );
+  public async addNextBlockToQueue(payload: EventsSyncHistoricalJobPayload) {
+    const { block, syncEventsToMainDB } = payload;
+    if (payload.batchBackfillId) {
+      const latestBlock = Number(await redis.get(`backfill:${payload.batchBackfillId}:fromBlock`));
+      const maxBlock = Number(await redis.get(`backfill:${payload.batchBackfillId}:toBlock`));
 
-        await redis.sadd(`backfill:failed:${payload.backfillId}`, `${payload.block}`);
-        if (payload.backfillId && payload.block > latestBlock && payload.block < maxBlock) {
-          await redis.zadd(`backfill:${payload.backfillId}`, `${latestBlock + 1}`, "fromBlock");
-          await this.addToQueue({
-            block: latestBlock + 1,
-            syncEventsToMainDB: payload.syncEventsToMainDB,
-            backfillId: payload.backfillId,
-          });
-        }
+      if (block > latestBlock - 1 && block < maxBlock) {
+        await redis.set(`backfill:${payload.batchBackfillId}:fromBlock`, `${block}`);
+        await this.addToQueue({
+          block: block + 1,
+          syncEventsToMainDB,
+          batchBackfillId: payload.batchBackfillId,
+        });
       }
-
-      // throw error;
     }
   }
 
