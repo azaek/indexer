@@ -151,10 +151,6 @@ export const _getTransactionTraces = async (
 
   try {
     traces = (await getTracesFromBlock(block)) as TransactionTraceManyCalls[];
-    // // eslint-disable-next-line
-    // console.log(traces);
-
-    // traces don't have the transaction hash, so we need to add it by using the txs array we are passing in by using the index of the trace
   } catch (e) {
     logger.error(`get-transactions-traces`, `Failed to get traces from block ${block}, ${e}`);
     // traces = await getTracesFromHashes(Txs.map((tx) => tx.hash));
@@ -201,8 +197,11 @@ export const fetchTransactionLogs = async (hash: string) => {
 export const getTracesFromBlock = async (blockNumber: number, retryMax = 10) => {
   const traces: TransactionTraceManyCalls[] = [];
   let retries = 0;
-  while (retries < retryMax) {
+  let gotTraces = false;
+  while (retries < retryMax && !gotTraces) {
     try {
+      // eslint-disable-next-line
+      console.log(blockNumber);
       const BlockTraces = (await baseProvider.send("trace_block", [
         blockNumberToHex(blockNumber),
       ])) as {
@@ -213,18 +212,22 @@ export const getTracesFromBlock = async (blockNumber: number, retryMax = 10) => 
           input: string;
           to: string;
           value: string;
+          init: string;
         };
         blockHash: string;
         blockNumber: number;
         result: {
           gasUsed: string;
           output: string;
+          address: string;
+          code: string;
         };
         subtraces: number;
         traceAddress: number[];
         transactionHash: string;
         transactionPosition: number;
         type: string;
+        error?: string;
       }[];
 
       const txHashes = BlockTraces.map((trace) => trace.transactionHash);
@@ -234,28 +237,42 @@ export const getTracesFromBlock = async (blockNumber: number, retryMax = 10) => 
 
       uniqueTxHashes.forEach((txHash) => {
         const txTraces = BlockTraces.filter((trace) => trace.transactionHash === txHash);
+
         const calls = txTraces.map((trace) => {
           return {
-            to: trace.action.to,
-            from: trace.action.from,
-            type: trace.action.callType,
-            input: trace.action.input,
-            output: trace.result.output,
-            gasUsed: trace.result.gasUsed,
-            gas: trace.action.gas,
+            to: trace?.action?.to || AddressZero,
+            from: trace.action?.from || AddressZero,
+            type: trace.action?.callType || "",
+            traceType: trace?.type || "",
+            input: trace?.action?.input || "",
+            output: trace?.result?.output || "",
+            gasUsed: trace.result?.gasUsed || "",
+            gas: trace.action?.gas || "",
+            address: trace?.result?.address || "",
+            code: trace?.result?.code || "",
+            init: trace?.action?.init || "",
+            value: trace?.action?.value || "",
+            error: trace?.error || "",
+            subtraces: trace?.subtraces || 0,
+            traceAddress: trace?.traceAddress || [],
           } as CallTrace;
         });
 
         traces.push({
           hash: txHash,
-          calls,
+          calls: calls.map((call) => {
+            // remove fields that are empty === ""
+            const callKeys = Object.keys(call);
+            callKeys.forEach((key) => {
+              if (call[key as keyof CallTrace] === "") {
+                delete call[key as keyof CallTrace];
+              }
+            });
+            return call;
+          }),
         });
       });
-
-      break;
-
-      // eslint-disable-next-line
-      // console.log(traces);
+      gotTraces = true;
     } catch (e) {
       retries++;
       await new Promise((resolve) => setTimeout(resolve, 200));
@@ -328,16 +345,18 @@ export const blockNumberToHex = (blockNumber: number) => {
 
 const processCall = (trace: TransactionTraceManyCalls, call: CallTrace) => {
   const processedCalls = [];
-  if (
-    (call.type as "CALL" | "STATICCALL" | "DELEGATECALL" | "CREATE" | "CREATE2") === "CREATE" ||
-    (call.type as "CALL" | "STATICCALL" | "DELEGATECALL" | "CREATE" | "CREATE2") === "CREATE2"
-  ) {
+  const createTypes = ["create", "create2"];
+  // eslint-disable-next-line
+  // @ts-ignore
+  if (createTypes.includes(call.traceType)) {
     processedCalls.push({
       address: call.to,
       deploymentTxHash: trace.hash,
       deploymentSender: call.from,
       deploymentFactory: call?.to || AddressZero,
-      bytecode: call.input,
+      // eslint-disable-next-line
+      // @ts-ignore
+      bytecode: call.code,
     });
   }
 
