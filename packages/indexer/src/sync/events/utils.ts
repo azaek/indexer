@@ -19,7 +19,7 @@ import { getRouters } from "@/utils/routers";
 import { Sources } from "@/models/sources";
 import { extractNestedTx } from "@/events-sync/handlers/attribution";
 import { getTransactionLogs } from "@/models/transaction-logs";
-import { supports_eth_getBlockReceipts, supports_eth_getBlockTrace } from "./supports";
+import { supports_eth_getBlockReceipts } from "./supports";
 import { logger } from "@/common/logger";
 import { BlockWithTransactions } from "@/models/blocks";
 
@@ -143,28 +143,29 @@ export const fetchTransaction = async (hash: string) => {
 };
 export const _getTransactionTraces = async (
   Txs: BlockWithTransactions["transactions"],
-  block: number
+  // eslint-disable-next-line
+  _block: number
 ) => {
   const timerStart = Date.now();
   let traces: TransactionTrace[] = [];
-  if (supports_eth_getBlockTrace) {
-    try {
-      traces = (await getTracesFromBlock(block)) as TransactionTrace[];
+  // if (supports_eth_getBlockTrace) {
+  //   try {
+  //     traces = (await getTracesFromBlock(block)) as TransactionTrace[];
 
-      // traces don't have the transaction hash, so we need to add it by using the txs array we are passing in by using the index of the trace
-      traces = traces.map((trace, index) => {
-        return {
-          ...trace,
-          hash: Txs[index].hash,
-        };
-      });
-    } catch (e) {
-      logger.error(`get-transactions-traces`, `Failed to get traces from block ${block}, ${e}`);
-      traces = await getTracesFromHashes(Txs.map((tx) => tx.hash));
-    }
-  } else {
-    traces = await getTracesFromHashes(Txs.map((tx) => tx.hash));
-  }
+  //     // traces don't have the transaction hash, so we need to add it by using the txs array we are passing in by using the index of the trace
+  //     traces = traces.map((trace, index) => {
+  //       return {
+  //         ...trace,
+  //         hash: Txs[index].hash,
+  //       };
+  //     });
+  //   } catch (e) {
+  //     logger.error(`get-transactions-traces`, `Failed to get traces from block ${block}, ${e}`);
+  //     traces = await getTracesFromHashes(Txs.map((tx) => tx.hash));
+  //   }
+  // } else {
+  traces = await getTracesFromHashes(Txs.map((tx) => tx.hash));
+  // }
   const timerEnd = Date.now();
 
   traces = traces.filter((trace: TransactionTrace | null) => trace !== null) as TransactionTrace[];
