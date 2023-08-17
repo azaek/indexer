@@ -58,6 +58,7 @@ export class EventsBackfillJob extends AbstractRabbitMqJobHandler {
         backfillId = `${payload.fromBlock}-${payload.toBlock}-${Date.now()}`;
       }
 
+      logger.info(this.queueName, `Events historical syncing started: ${backfillId}`);
       const chunkSize = payload.chunkSize || 300;
       // split backfill into chunks, each with their own backfillId. Chunk count is the number of chunks to split the backfill into
 
