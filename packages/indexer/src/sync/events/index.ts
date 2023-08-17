@@ -358,7 +358,7 @@ export const syncEvents = async (block: number, syncEventsToMainDB = true) => {
     // // eslint-disable-next-line
     // console.log(`Syncing block ${block}`);
 
-    // logger.info("sync-events-v2", `Events realtime syncing block ${block}`);
+    logger.info("sync-events-v2", `Events realtime syncing block ${block}`);
     const startSyncTime = Date.now();
     const blockData = await syncEventsUtils.fetchBlock(block);
 
@@ -426,14 +426,14 @@ export const syncEvents = async (block: number, syncEventsToMainDB = true) => {
       blockSyncTime: endSaveBlocksTime - startSyncTime,
     };
 
-    // logger.info(
-    //   "sync-events-timing-historical",
-    //   JSON.stringify({
-    //     message: `Events historical syncing block ${block}`,
-    //     block,
-    //     ...timings,
-    //   })
-    // );
+    logger.info(
+      "sync-events-timing-historical",
+      JSON.stringify({
+        message: `Events historical syncing block ${block}`,
+        block,
+        ...timings,
+      })
+    );
   } catch (error) {
     logger.warn(
       "sync-events-timing-historical",
