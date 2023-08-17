@@ -27,7 +27,7 @@ export class EventsBackfillJob extends AbstractRabbitMqJobHandler {
   }
   protected async process(payload: EventsBackfillJobPayload) {
     try {
-      if (!payload.fromBlock || !payload.toBlock || !payload.backfillId) {
+      if (!payload.fromBlock || !payload.toBlock) {
         return;
       }
 
