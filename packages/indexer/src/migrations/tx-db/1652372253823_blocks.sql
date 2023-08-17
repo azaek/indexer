@@ -10,6 +10,7 @@ CREATE TABLE "blocks" (
   "logs_bloom" BYTEA NOT NULL,
   "transactions_root" BYTEA NOT NULL,
   "state_root" BYTEA NOT NULL,
+  "mix_hash" BYTEA,
   "receipts_root" BYTEA NOT NULL,
   "miner" BYTEA NOT NULL,
   "difficulty" BYTEA NOT NULL,

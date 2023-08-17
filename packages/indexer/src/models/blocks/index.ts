@@ -11,6 +11,7 @@ export interface Block {
   logsBloom: string;
   transactionsRoot: string;
   stateRoot: string;
+  mixHash: string;
   receiptsRoot: string;
   miner: string;
   difficulty: string;
@@ -21,6 +22,9 @@ export interface Block {
   gasUsed: number;
   baseFeePerGas: number;
   uncles: string[];
+}
+
+export interface BlockWithTransactions extends Block {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   transactions: any[];
 }
@@ -48,6 +52,7 @@ export const saveBlock = async (block: Block): Promise<Block> => {
         logs_bloom,
         transactions_root,
         state_root,
+        mix_hash,
         receipts_root,
         miner,
         difficulty,
@@ -68,6 +73,7 @@ export const saveBlock = async (block: Block): Promise<Block> => {
         $/logsBloom/,
         $/transactionsRoot/,
         $/stateRoot/,
+        $/mixHash/,
         $/receiptsRoot/,
         $/miner/,
         $/difficulty/,
@@ -91,6 +97,7 @@ export const saveBlock = async (block: Block): Promise<Block> => {
       logsBloom: toBuffer(block.logsBloom),
       transactionsRoot: toBuffer(block.transactionsRoot),
       stateRoot: toBuffer(block.stateRoot),
+      mixHash: toBuffer(block.mixHash),
       receiptsRoot: toBuffer(block.receiptsRoot),
       miner: toBuffer(block.miner),
       difficulty: toBuffer(block.difficulty),
@@ -142,6 +149,7 @@ export const getBlocks = async (number: number): Promise<Block[]> =>
         logsBloom: fromBuffer(block.logs_bloom),
         transactionsRoot: fromBuffer(block.transactions_root),
         stateRoot: fromBuffer(block.state_root),
+        mixHash: fromBuffer(block.mix_hash),
         receiptsRoot: fromBuffer(block.receipts_root),
         miner: fromBuffer(block.miner),
         difficulty: fromBuffer(block.difficulty),
@@ -155,7 +163,13 @@ export const getBlocks = async (number: number): Promise<Block[]> =>
       }));
     });
 
-export const getBlockWithNumber = async (number: number, hash: string): Promise<Block | null> =>
+export const getBlockWithNumber = async (
+  number: number,
+  hash: string
+): Promise<{
+  hash: string;
+  number: number;
+} | null> =>
   txdb
     .oneOrNone(
       `
@@ -179,22 +193,5 @@ export const getBlockWithNumber = async (number: number, hash: string): Promise<
       return {
         hash: fromBuffer(result.hash),
         number,
-        timestamp: result.timestamp,
-        parentHash: "",
-        nonce: "",
-        sha3Uncles: "",
-        logsBloom: "",
-        transactionsRoot: "",
-        stateRoot: "",
-        receiptsRoot: "",
-        miner: "",
-        difficulty: "",
-        totalDifficulty: "",
-        size: 0,
-        extraData: "",
-        gasLimit: 0,
-        gasUsed: 0,
-        baseFeePerGas: 0,
-        uncles: [],
       };
     });

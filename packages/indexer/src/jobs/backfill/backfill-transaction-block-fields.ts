@@ -55,10 +55,18 @@ if (config.doBackgroundWork) {
         if (!block_timestamp) {
           const tx = await baseProvider.getTransaction(fromBuffer(hash));
           if (tx) {
+            const timestamp = (await syncEventsUtils.fetchBlock(tx.blockNumber!))?.timestamp;
+            if (!timestamp) {
+              logger.error(
+                QUEUE_NAME,
+                `Failed to fetch block timestamp for block ${tx.blockNumber!}`
+              );
+              throw new Error(`Failed to fetch block timestamp for block ${tx.blockNumber!}`);
+            }
             values.push({
               hash,
               block_number: tx.blockNumber!,
-              block_timestamp: (await syncEventsUtils.fetchBlock(tx.blockNumber!)).timestamp,
+              block_timestamp: timestamp,
             });
           }
         }

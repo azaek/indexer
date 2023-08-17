@@ -21,10 +21,10 @@ import { extractNestedTx } from "@/events-sync/handlers/attribution";
 import { getTransactionLogs } from "@/models/transaction-logs";
 import { supports_eth_getBlockReceipts, supports_eth_getBlockTrace } from "./supports";
 import { logger } from "@/common/logger";
-import { Block } from "@/models/blocks";
+import { BlockWithTransactions } from "@/models/blocks";
 
 export const fetchBlock = async (blockNumber: number, retryMax = 10) => {
-  let block: Block | undefined;
+  let block: BlockWithTransactions | undefined;
   let retries = 0;
   while (!block && retries < retryMax) {
     try {
@@ -41,7 +41,7 @@ export const fetchBlock = async (blockNumber: number, retryMax = 10) => {
 };
 
 export const _saveBlockTransactions = async (
-  blockData: Block,
+  blockData: BlockWithTransactions,
   transactionReceipts: TransactionReceipt[]
 ) => {
   const timerStart = Date.now();
@@ -51,7 +51,7 @@ export const _saveBlockTransactions = async (
 };
 
 export const saveBlockTransactions = async (
-  blockData: Block,
+  blockData: BlockWithTransactions,
   transactionReceipts: TransactionReceipt[]
 ) => {
   // Create transactions array to store
@@ -102,9 +102,12 @@ export const fetchTransaction = async (hash: string) => {
   const tx = await getTransaction(hash);
   return tx;
 };
-export const _getTransactionTraces = async (Txs: { hash: string }[], block: number) => {
+export const _getTransactionTraces = async (
+  Txs: BlockWithTransactions["transactions"],
+  block: number
+) => {
   const timerStart = Date.now();
-  let traces;
+  let traces: TransactionTrace[] = [];
   if (supports_eth_getBlockTrace) {
     try {
       traces = (await getTracesFromBlock(block)) as TransactionTrace[];
@@ -123,10 +126,9 @@ export const _getTransactionTraces = async (Txs: { hash: string }[], block: numb
   } else {
     traces = await getTracesFromHashes(Txs.map((tx) => tx.hash));
   }
-
-  traces = traces.filter((trace) => trace !== null) as TransactionTrace[];
-
   const timerEnd = Date.now();
+
+  traces = traces.filter((trace: TransactionTrace | null) => trace !== null) as TransactionTrace[];
 
   return {
     traces,
@@ -180,8 +182,8 @@ export const getTracesFromBlock = async (blockNumber: number, retryMax = 10) => 
   return traces;
 };
 
-export const getTracesFromHashes = async (txHashes: string[]) => {
-  const traces = await Promise.all(
+export const getTracesFromHashes = async (txHashes: string[]): Promise<TransactionTrace[]> => {
+  let traces = await Promise.all(
     txHashes.map(async (txHash) => {
       const trace = await getTransactionTraceFromRPC(txHash);
       if (!trace) {
@@ -195,10 +197,14 @@ export const getTracesFromHashes = async (txHashes: string[]) => {
       };
     })
   );
-  return traces;
+
+  // remove null traces
+  traces = traces.filter((trace: TransactionTrace | null) => trace !== null);
+
+  return traces as TransactionTrace[];
 };
 
-export const _getTransactionReceiptsFromBlock = async (block: Block) => {
+export const _getTransactionReceiptsFromBlock = async (block: BlockWithTransactions) => {
   const timerStart = Date.now();
   let transactionReceipts;
   if (supports_eth_getBlockReceipts) {

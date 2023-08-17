@@ -251,7 +251,7 @@ export const extractEventsBatches = (enhancedEvents: EnhancedEvent[]): EventsBat
   return [...txHashToEventsBatch.values()];
 };
 
-const getBlockSyncData = async (blockData: blocksModel.Block) => {
+const getBlockSyncData = async (blockData: blocksModel.BlockWithTransactions) => {
   const [
     { traces, getTransactionTracesTime },
     { transactionReceipts, getTransactionReceiptsTime },
@@ -275,7 +275,7 @@ const getBlockSyncData = async (blockData: blocksModel.Block) => {
 };
 
 const saveLogsAndTracesAndTransactions = async (
-  blockData: blocksModel.Block,
+  blockData: blocksModel.BlockWithTransactions,
   transactionReceipts: TransactionReceipt[],
   traces: TransactionTrace[]
 ) => {
@@ -314,7 +314,7 @@ const saveLogsAndTracesAndTransactions = async (
   };
 };
 
-const processEvents = async (logs: any[], blockData: blocksModel.Block) => {
+const processEvents = async (logs: any[], blockData: blocksModel.BlockWithTransactions) => {
   const availableEventData = getEventData();
   let enhancedEvents = logs
     .map((log) => {
