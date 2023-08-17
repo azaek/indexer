@@ -144,28 +144,30 @@ export const fetchTransaction = async (hash: string) => {
 export const _getTransactionTraces = async (
   Txs: BlockWithTransactions["transactions"],
   // eslint-disable-next-line
-  _block: number
+  block: number
 ) => {
   const timerStart = Date.now();
   let traces: TransactionTrace[] = [];
-  // if (supports_eth_getBlockTrace) {
-  //   try {
-  //     traces = (await getTracesFromBlock(block)) as TransactionTrace[];
 
-  //     // traces don't have the transaction hash, so we need to add it by using the txs array we are passing in by using the index of the trace
-  //     traces = traces.map((trace, index) => {
-  //       return {
-  //         ...trace,
-  //         hash: Txs[index].hash,
-  //       };
-  //     });
-  //   } catch (e) {
-  //     logger.error(`get-transactions-traces`, `Failed to get traces from block ${block}, ${e}`);
-  //     traces = await getTracesFromHashes(Txs.map((tx) => tx.hash));
-  //   }
-  // } else {
-  traces = await getTracesFromHashes(Txs.map((tx) => tx.hash));
-  // }
+  try {
+    traces = (await getTracesFromBlock(block)) as TransactionTrace[];
+    // // eslint-disable-next-line
+    // console.log(traces);
+
+    // traces don't have the transaction hash, so we need to add it by using the txs array we are passing in by using the index of the trace
+    traces = traces.map((trace, index) => {
+      return {
+        ...trace,
+        // eslint-disable-next-line
+        // @ts-ignore
+        hash: trace?.transactionHash || Txs[index].hash,
+      };
+    });
+  } catch (e) {
+    logger.error(`get-transactions-traces`, `Failed to get traces from block ${block}, ${e}`);
+    traces = await getTracesFromHashes(Txs.map((tx) => tx.hash));
+  }
+
   const timerEnd = Date.now();
 
   traces = traces.filter((trace: TransactionTrace | null) => trace !== null) as TransactionTrace[];
@@ -209,10 +211,7 @@ export const getTracesFromBlock = async (blockNumber: number, retryMax = 10) => 
   let retries = 0;
   while (!traces && retries < retryMax) {
     try {
-      traces = await baseProvider.send("debug_traceBlockByNumber", [
-        blockNumberToHex(blockNumber),
-        { tracer: "callTracer" },
-      ]);
+      traces = await baseProvider.send("trace_block", [blockNumberToHex(blockNumber)]);
     } catch (e) {
       retries++;
       await new Promise((resolve) => setTimeout(resolve, 200));

@@ -355,6 +355,9 @@ const processEvents = async (logs: any[], blockData: blocksModel.BlockWithTransa
 
 export const syncEvents = async (block: number, syncEventsToMainDB = true) => {
   try {
+    // // eslint-disable-next-line
+    // console.log(`Syncing block ${block}`);
+
     // logger.info("sync-events-v2", `Events realtime syncing block ${block}`);
     const startSyncTime = Date.now();
     const blockData = await syncEventsUtils.fetchBlock(block);
