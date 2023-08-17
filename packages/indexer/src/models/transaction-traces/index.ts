@@ -2,7 +2,6 @@ import { CallTrace } from "@georgeroman/evm-tx-simulator/dist/types";
 
 import { txdb, pgp } from "@/common/db";
 import { fromBuffer, toBuffer } from "@/common/utils";
-import { logger } from "ethers";
 
 export type TransactionTrace = {
   hash: string;
@@ -25,8 +24,6 @@ export const saveTransactionTraces = async (transactionTraces: TransactionTrace[
       calls,
     });
   }
-
-  logger.info(`save-traces`, { count: values.length, og: transactionTraces.length });
 
   if (values.length === 0) {
     return;
