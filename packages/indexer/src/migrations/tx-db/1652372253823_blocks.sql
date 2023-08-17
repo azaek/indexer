@@ -17,9 +17,9 @@ CREATE TABLE "blocks" (
   "total_difficulty" BYTEA NOT NULL,
   "size" INT NOT NULL,
   "extra_data" BYTEA NOT NULL,
-  "gas_limit" INT NOT NULL,
-  "gas_used" INT NOT NULL,
-  "base_fee_per_gas" INT,
+  "gas_limit" NUMERIC NOT NULL,
+  "gas_used" NUMERIC NOT NULL,
+  "base_fee_per_gas" NUMERIC,
   "uncles" BYTEA[] NOT NULL
 );
 
