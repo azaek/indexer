@@ -37,6 +37,36 @@ export const fetchBlock = async (blockNumber: number, retryMax = 10) => {
       await new Promise((resolve) => setTimeout(resolve, 200));
     }
   }
+  if (!block) {
+    return null;
+  }
+
+  block = {
+    ...block,
+    number: Number(block.number),
+    timestamp: Number(block.timestamp),
+    difficulty: Number(block.difficulty).toString(),
+    totalDifficulty: Number(block.totalDifficulty).toString(),
+    gasLimit: Number(block.gasLimit),
+    gasUsed: Number(block.gasUsed),
+    size: Number(block.size),
+    transactions: block.transactions.map((tx) => {
+      return {
+        ...tx,
+        nonce: Number(tx.nonce),
+        gasLimit: Number(tx.gasLimit),
+        gasPrice: Number(tx.gasPrice),
+        maxFeePerGas: Number(tx.maxFeePerGas),
+        maxPriorityFeePerGas: Number(tx.maxPriorityFeePerGas),
+        value: Number(tx.value),
+        blockNumber: Number(tx.blockNumber),
+        transactionIndex: Number(tx.transactionIndex),
+        gasUsed: Number(tx.gasUsed),
+        cumulativeGasUsed: Number(tx.cumulativeGasUsed),
+      };
+    }),
+  };
+
   return block;
 };
 
