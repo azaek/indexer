@@ -8,7 +8,12 @@ export type TransactionTrace = {
   calls: CallTrace;
 };
 
-export const saveTransactionTraces = async (transactionTraces: TransactionTrace[]) => {
+export type TransactionTraceManyCalls = {
+  hash: string;
+  calls: CallTrace[];
+};
+
+export const saveTransactionTraces = async (transactionTraces: TransactionTraceManyCalls[]) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const values: any[] = [];
   const columns = new pgp.helpers.ColumnSet(["hash", { name: "calls", mod: ":json" }], {

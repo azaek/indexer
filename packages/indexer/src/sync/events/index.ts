@@ -14,7 +14,7 @@ import { eventsSyncRealtimeJob } from "@/jobs/events-sync/events-sync-realtime-j
 import { removeUnsyncedEventsActivitiesJob } from "@/jobs/activities/remove-unsynced-events-activities-job";
 import { deleteTransactionLogs, saveTransactionLogs } from "@/models/transaction-logs";
 import {
-  TransactionTrace,
+  TransactionTraceManyCalls,
   deleteTransactionTraces,
   saveTransactionTraces,
 } from "@/models/transaction-traces";
@@ -277,7 +277,7 @@ const getBlockSyncData = async (blockData: blocksModel.BlockWithTransactions) =>
 const saveLogsAndTracesAndTransactions = async (
   blockData: blocksModel.BlockWithTransactions,
   transactionReceipts: TransactionReceipt[],
-  traces: TransactionTrace[]
+  traces: TransactionTraceManyCalls[]
 ) => {
   const transactionLogs: {
     hash: string;
