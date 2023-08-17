@@ -77,8 +77,8 @@ export const saveTransactions = async (transactions: Transaction[]) => {
     hash: toBuffer(transaction.hash),
     from: toBuffer(transaction.from),
     to: toBuffer(transaction.to),
-    value: transaction.value,
-    data: toBuffer(transaction.data),
+    value: Number(transaction.value),
+    data: transaction?.data ? toBuffer(transaction.data) : null,
     block_number: transaction.blockNumber,
     block_hash: toBuffer(transaction.blockHash),
     block_timestamp: transaction.blockTimestamp,
@@ -98,7 +98,7 @@ export const saveTransactions = async (transactions: Transaction[]) => {
     access_list: transaction.accessList ? JSON.stringify(transaction.accessList) : "[]",
     r: transaction.r ? toBuffer(transaction.r) : null,
     s: transaction.s ? toBuffer(transaction.s) : null,
-    v: transaction.v,
+    v: Number(transaction.v),
   }));
 
   const chunks = _.chunk(transactionsValues, CHUNK_SIZE);

@@ -98,7 +98,7 @@ export const saveBlockTransactions = async (
         from: tx.from,
         to: tx.to || AddressZero,
         value: tx.value.toString(),
-        data: tx?.data,
+        data: tx?.input,
         blockNumber: blockData.number,
         blockHash: blockData.hash,
         blockTimestamp: blockData.timestamp,
