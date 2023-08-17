@@ -199,7 +199,7 @@ export const fetchTransactionLogs = async (hash: string) => {
 };
 
 export const getTracesFromBlock = async (blockNumber: number, retryMax = 10) => {
-  let traces: TransactionTraceManyCalls[] = [];
+  const traces: TransactionTraceManyCalls[] = [];
   let retries = 0;
   while (retries < retryMax) {
     try {
@@ -227,52 +227,10 @@ export const getTracesFromBlock = async (blockNumber: number, retryMax = 10) => 
         type: string;
       }[];
 
-      //   trace block returns an array, where each object is one call
-      //   {
-      // 	"action": {
-      // 		"from": "0x693fb96fdda3c382fde7f43a622209c3dd028b98",
-      // 		"callType": "call",
-      // 		"gas": "0x30466",
-      // 		"input": "0x38ed17390000000000000000000000000000000000000000000000097503ad36a01b8000000000000000000000000000000000000000000000000003e8e0ed06101dc00000000000000000000000000000000000000000000000000000000000000000a0000000000000000000000000693fb96fdda3c382fde7f43a622209c3dd028b98000000000000000000000000000000000000000000000000000000006435eb9b00000000000000000000000000000000000000000000000000000000000000020000000000000000000000000d500b1d8e8ef31e21c99d1db9a6444d3adf12700000000000000000000000000e50bea95fe001a370a4f1c220c49aedcb982dec",
-      // 		"to": "0xa5e0829caced8ffdd4de3c43696c57f7d7a678ff",
-      // 		"value": "0x0"
-      // 	},
-      // 	"blockHash": "0x65ce9549be61ac302e2c43f39e2fab000d5730a27a2dd4c724cfdef11165e424",
-      // 	"blockNumber": 41423415,
-      // 	"result": {
-      // 		"gasUsed": "0x14aed",
-      // 		"output": "0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000097503ad36a01b8000000000000000000000000000000000000000000000000003e8f7de52cda5dcc7"
-      // 	},
-      // 	"subtraces": 3,
-      // 	"traceAddress": [],
-      // 	"transactionHash": "0xe48b0f1e9e705d180137c46f1d7ea50c63bb6bb188398a76f0dc5a5d121c98fa",
-      // 	"transactionPosition": 1,
-      // 	"type": "call"
-      // }
-
-      // there can be multiple calls per transaction, so lets find all of teh calls that belong to a Transaction, and then create an object like
-      // {
-      //   hash: txHash,
-      //   calls: [call1, call2, call3]
-      // }
-      // we are interested in the action object, which contains the from, to, input, and value, and the result
-      // format it like this:
-      //   {
-      //   "to": "0xc35dadb65012ec5796536bd9864ed8773abc74c4",
-      //   "gas": "0x1e0cb",
-      //   "from": "0x9cba03cbb5995537e5fd1ac119f77789b46c616a",
-      //   "type": "STATICCALL",
-      //   "input": "0xe6a439050000000000000000000000000d500b1d8e8ef31e21c99d1db9a6444d3adf127000000000000000000000000034d4ab47bee066f361fa52d792e69ac7bd05ee23",
-      //   "output": "0x00000000000000000000000091670a2a69554c61d814cd7f406d7793387e68ef",
-      //   "gasUsed": "0xa54"
-      // }
-
       const txHashes = BlockTraces.map((trace) => trace.transactionHash);
 
       // remove duplicates
       const uniqueTxHashes = [...new Set(txHashes)];
-
-      traces = [];
 
       uniqueTxHashes.forEach((txHash) => {
         const txTraces = BlockTraces.filter((trace) => trace.transactionHash === txHash);
