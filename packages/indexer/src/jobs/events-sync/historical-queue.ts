@@ -14,7 +14,7 @@ export type EventsSyncHistoricalJobPayload = {
 export class EventsSyncHistoricalJob extends AbstractRabbitMqJobHandler {
   queueName = "events-sync-historical";
   maxRetries = 30;
-  concurrency = 50;
+  concurrency = 1;
   consumerTimeout = 60 * 3000;
   backoff = {
     type: "fixed",
@@ -45,18 +45,6 @@ export class EventsSyncHistoricalJob extends AbstractRabbitMqJobHandler {
   public async addNextBlockToQueue(payload: EventsSyncHistoricalJobPayload) {
     const { block, syncEventsToMainDB } = payload;
     if (payload.batchBackfillId) {
-      // const latestBlock = Number(await redis.get(`backfill:${payload.batchBackfillId}:fromBlock`));
-      // const maxBlock = Number(await redis.get(`backfill:${payload.batchBackfillId}:toBlock`));
-
-      // if (block > latestBlock - 1 && block < maxBlock) {
-      //   // await redis.set(`backfill:${payload.batchBackfillId}:fromBlock`, `${block}`);
-      //   await this.addToQueue({
-      //     block: block + 1,
-      //     syncEventsToMainDB,
-      //     batchBackfillId: payload.batchBackfillId,
-      //   });
-      // }
-
       await this.addToQueue({
         block: block + 1,
         syncEventsToMainDB,
