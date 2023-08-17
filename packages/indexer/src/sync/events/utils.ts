@@ -199,7 +199,7 @@ export const fetchTransactionLogs = async (hash: string) => {
 };
 
 export const getTracesFromBlock = async (blockNumber: number, retryMax = 10) => {
-  let traces: TransactionTraceManyCalls[];
+  let traces: TransactionTraceManyCalls[] = [];
   let retries = 0;
   while (retries < retryMax) {
     try {
