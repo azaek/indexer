@@ -6,7 +6,6 @@ import { baseProvider } from "@/common/provider";
 import { Transaction, getTransaction, saveTransactions } from "@/models/transactions";
 import { TransactionReceipt } from "@ethersproject/providers";
 
-import { BlockWithTransactions } from "@ethersproject/abstract-provider";
 import { TransactionTrace } from "@/models/transaction-traces";
 import { ContractAddress, saveContractAddresses } from "@/models/contract_addresses";
 import { CallTrace } from "@georgeroman/evm-tx-simulator/dist/types";
@@ -22,14 +21,27 @@ import { extractNestedTx } from "@/events-sync/handlers/attribution";
 import { getTransactionLogs } from "@/models/transaction-logs";
 import { supports_eth_getBlockReceipts, supports_eth_getBlockTrace } from "./supports";
 import { logger } from "@/common/logger";
+import { Block } from "@/models/blocks";
 
-export const fetchBlock = async (blockNumber: number) => {
-  const block = await baseProvider.getBlockWithTransactions(blockNumber);
+export const fetchBlock = async (blockNumber: number, retryMax = 10) => {
+  let block: Block | undefined;
+  let retries = 0;
+  while (!block && retries < retryMax) {
+    try {
+      block = await baseProvider.send("eth_getBlockByNumber", [
+        blockNumberToHex(blockNumber),
+        true,
+      ]);
+    } catch (e) {
+      retries++;
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    }
+  }
   return block;
 };
 
 export const _saveBlockTransactions = async (
-  blockData: BlockWithTransactions,
+  blockData: Block,
   transactionReceipts: TransactionReceipt[]
 ) => {
   const timerStart = Date.now();
@@ -39,7 +51,7 @@ export const _saveBlockTransactions = async (
 };
 
 export const saveBlockTransactions = async (
-  blockData: BlockWithTransactions,
+  blockData: Block,
   transactionReceipts: TransactionReceipt[]
 ) => {
   // Create transactions array to store
@@ -186,7 +198,7 @@ export const getTracesFromHashes = async (txHashes: string[]) => {
   return traces;
 };
 
-export const _getTransactionReceiptsFromBlock = async (block: BlockWithTransactions) => {
+export const _getTransactionReceiptsFromBlock = async (block: Block) => {
   const timerStart = Date.now();
   let transactionReceipts;
   if (supports_eth_getBlockReceipts) {
