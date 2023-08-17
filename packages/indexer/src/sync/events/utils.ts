@@ -92,37 +92,49 @@ export const saveBlockTransactions = async (
         `Could not find transaction ${txReceipt.transactionHash} in block ${blockData.number}`
       );
 
-    return {
-      hash: tx.hash.toLowerCase(),
-      from: tx.from.toLowerCase(),
-      to: (tx.to || AddressZero).toLowerCase(),
-      value: tx.value.toString(),
-      data: tx?.data?.toLowerCase(),
-      blockNumber: blockData.number,
-      blockHash: blockData.hash.toLowerCase(),
-      blockTimestamp: blockData.timestamp,
-      gas: tx?.gas,
-      gasPrice: tx?.gasPrice,
-      maxFeePerGas: tx?.maxFeePerGas,
-      maxPriorityFeePerGas: tx?.maxPriorityFeePerGas,
-      cumulativeGasUsed: txReceipt?.cumulativeGasUsed?.toString(),
-      effectiveGasPrice: txReceipt?.effectiveGasPrice?.toString(),
-      contractAddress: txReceipt?.contractAddress?.toLowerCase(),
-      logsBloom: txReceipt.logsBloom,
-      status: txReceipt.status === 1,
-      transactionIndex: txReceipt.transactionIndex,
-      type: tx.type,
-      nonce: tx.nonce,
-      gasUsed: txReceipt?.gasUsed?.toString(),
-      accessList: tx.accessList,
-      r: tx.r,
-      s: tx.s,
-      v: tx.v,
-    };
+    try {
+      return {
+        hash: tx.hash,
+        from: tx.from,
+        to: tx.to || AddressZero,
+        value: tx.value.toString(),
+        data: tx?.data,
+        blockNumber: blockData.number,
+        blockHash: blockData.hash,
+        blockTimestamp: blockData.timestamp,
+        gas: tx?.gas,
+        gasPrice: tx?.gasPrice,
+        maxFeePerGas: tx?.maxFeePerGas,
+        maxPriorityFeePerGas: tx?.maxPriorityFeePerGas,
+        cumulativeGasUsed: txReceipt?.cumulativeGasUsed?.toString(),
+        effectiveGasPrice: txReceipt?.effectiveGasPrice?.toString(),
+        contractAddress: txReceipt?.contractAddress,
+        logsBloom: txReceipt.logsBloom,
+        status: txReceipt.status === 1,
+        transactionIndex: txReceipt.transactionIndex,
+        type: tx.type,
+        nonce: tx.nonce,
+        gasUsed: txReceipt?.gasUsed?.toString(),
+        accessList: tx.accessList,
+        r: tx.r,
+        s: tx.s,
+        v: tx.v,
+      };
+    } catch (e) {
+      logger.error(
+        "save-block-transactions",
+        `Failed to save transaction ${tx.hash} ${JSON.stringify({
+          tx,
+          txReceipt,
+          blockData,
+        })}, ${e}`
+      );
+      return null;
+    }
   });
 
   // Save all transactions within the block
-  await saveTransactions(transactions);
+  await saveTransactions(transactions.filter((tx) => tx !== null) as Transaction[]);
 };
 
 export const fetchTransaction = async (hash: string) => {
