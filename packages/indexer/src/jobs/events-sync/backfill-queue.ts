@@ -1,4 +1,5 @@
 import { logger } from "@/common/logger";
+import { redis } from "@/common/redis";
 
 import { AbstractRabbitMqJobHandler, BackoffStrategy } from "@/jobs/abstract-rabbit-mq-job-handler";
 import { eventsSyncHistoricalJob } from "@/jobs/events-sync/historical-queue";
@@ -29,9 +30,35 @@ export class EventsBackfillJob extends AbstractRabbitMqJobHandler {
       if (!payload.fromBlock || !payload.toBlock) {
         return;
       }
-      const backfillId = `${payload.fromBlock}-${payload.toBlock}-${Date.now()}`;
+      let backfillId = payload.backfillId;
 
-      logger.info(this.queueName, `Events historical syncing starting: ${backfillId}`);
+      // if backfillId is provided, then we're resuming a backfill job. do this by going through the sorted set and adding each block to the queue
+      if (backfillId) {
+        // get list of backfill ids
+        const backfillIds = await redis.lrange(`backfillIds:${backfillId}`, 0, -1);
+        for (const batchBackfillId of backfillIds) {
+          const fromBlock = await redis.get(`backfill:${batchBackfillId}:fromBlock`);
+          if (!fromBlock) {
+            logger.warn(
+              this.queueName,
+              `Events historical syncing failed: ${batchBackfillId} not found`
+            );
+            continue;
+          }
+          // add backfill to queue
+          await eventsSyncHistoricalJob.addToQueue({
+            block: parseInt(fromBlock),
+            syncEventsToMainDB: payload.syncEventsToMainDB,
+            batchBackfillId: batchBackfillId,
+          });
+        }
+
+        return;
+      } else {
+        backfillId = `${payload.fromBlock}-${payload.toBlock}-${Date.now()}`;
+      }
+
+      logger.info(this.queueName, `Events historical syncing started: ${backfillId}`);
       const chunkSize = payload.chunkSize || 300;
       // split backfill into chunks, each with their own backfillId. Chunk count is the number of chunks to split the backfill into
 
@@ -47,6 +74,11 @@ export class EventsBackfillJob extends AbstractRabbitMqJobHandler {
         }
 
         const batchBackfillId = `${fromBlock}-${toBlock}-${Date.now()}`;
+        // add batch backfill id to a list of backfill ids
+        await redis.rpush(`backfillIds:${backfillId}`, batchBackfillId);
+        await redis.set(`backfill:${batchBackfillId}:fromBlock`, `${fromBlock}`);
+        await redis.set(`backfill:${batchBackfillId}:toBlock`, `${toBlock}`);
+
         // add backfill to queue
         await eventsSyncHistoricalJob.addToQueue({
           block: fromBlock,
@@ -64,6 +96,11 @@ export class EventsBackfillJob extends AbstractRabbitMqJobHandler {
         toBlock = payload.toBlock;
 
         const batchBackfillId = `${fromBlock}-${toBlock}-${Date.now()}`;
+        // add batch backfill id to a list of backfill ids
+        await redis.rpush("backfillIds", batchBackfillId);
+        await redis.set(`backfill:${batchBackfillId}:fromBlock`, `${fromBlock}`);
+        await redis.set(`backfill:${batchBackfillId}:toBlock`, `${toBlock}`);
+
         // add backfill to queue
         await eventsSyncHistoricalJob.addToQueue({
           block: fromBlock,
@@ -71,6 +108,7 @@ export class EventsBackfillJob extends AbstractRabbitMqJobHandler {
           batchBackfillId: batchBackfillId,
         });
       }
+      return;
     } catch (error) {
       logger.warn(this.queueName, `Events historical syncing failed: ${error}`);
       throw error;
