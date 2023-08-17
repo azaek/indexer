@@ -20,10 +20,10 @@ export const saveTransactionTraces = async (transactionTraces: TransactionTraceM
     table: "transaction_traces",
   });
 
-  for (const { hash } of transactionTraces) {
+  for (const { hash, calls } of transactionTraces) {
     values.push({
       hash: toBuffer(hash),
-      calls: [],
+      calls,
     });
   }
 
