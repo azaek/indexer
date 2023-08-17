@@ -100,7 +100,7 @@ export const saveBlock = async (block: Block): Promise<Block> => {
       mixHash: toBuffer(block.mixHash),
       receiptsRoot: toBuffer(block.receiptsRoot),
       miner: toBuffer(block.miner),
-      difficulty: block.difficulty ? toBuffer(block.difficulty) : null,
+      difficulty: block?.difficulty ? toBuffer(block.difficulty) : null,
       totalDifficulty: toBuffer(block.totalDifficulty),
       size: block.size,
       extraData: toBuffer(block.extraData),
