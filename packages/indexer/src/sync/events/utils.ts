@@ -199,9 +199,9 @@ export const fetchTransactionLogs = async (hash: string) => {
 };
 
 export const getTracesFromBlock = async (blockNumber: number, retryMax = 10) => {
-  let traces: TransactionTraceManyCalls[] = [];
+  let traces: TransactionTraceManyCalls[];
   let retries = 0;
-  while (traces.length === 0 && retries < retryMax) {
+  while (retries < retryMax) {
     try {
       const BlockTraces = (await baseProvider.send("trace_block", [
         blockNumberToHex(blockNumber),
@@ -293,6 +293,8 @@ export const getTracesFromBlock = async (blockNumber: number, retryMax = 10) => 
           calls,
         });
       });
+
+      break;
 
       // eslint-disable-next-line
       // console.log(traces);
