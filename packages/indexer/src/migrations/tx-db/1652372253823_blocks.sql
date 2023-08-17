@@ -2,8 +2,8 @@
 
 CREATE TABLE "blocks" (
   "hash" BYTEA NOT NULL,
-  "number" INT NOT NULL,
-  "timestamp" INT NOT NULL,
+  "number" NUMERIC NOT NULL,
+  "timestamp" NUMERIC NOT NULL,
   "parent_hash" BYTEA NOT NULL,
   "nonce" BYTEA,
   "sha3_uncles" BYTEA NOT NULL,
@@ -15,7 +15,7 @@ CREATE TABLE "blocks" (
   "miner" BYTEA NOT NULL,
   "difficulty" BYTEA NOT NULL,
   "total_difficulty" BYTEA NOT NULL,
-  "size" INT NOT NULL,
+  "size" NUMERIC NOT NULL,
   "extra_data" BYTEA NOT NULL,
   "gas_limit" NUMERIC NOT NULL,
   "gas_used" NUMERIC NOT NULL,
