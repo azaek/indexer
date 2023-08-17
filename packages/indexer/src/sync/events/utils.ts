@@ -45,8 +45,6 @@ export const fetchBlock = async (blockNumber: number, retryMax = 10) => {
     ...block,
     number: Number(block.number),
     timestamp: Number(block.timestamp),
-    difficulty: Number(block.difficulty).toString(),
-    totalDifficulty: Number(block.totalDifficulty).toString(),
     gasLimit: Number(block.gasLimit),
     gasUsed: Number(block.gasUsed),
     size: Number(block.size),
@@ -54,15 +52,17 @@ export const fetchBlock = async (blockNumber: number, retryMax = 10) => {
       return {
         ...tx,
         nonce: Number(tx.nonce),
-        gasLimit: Number(tx.gasLimit),
-        gasPrice: Number(tx.gasPrice),
-        maxFeePerGas: Number(tx.maxFeePerGas),
-        maxPriorityFeePerGas: Number(tx.maxPriorityFeePerGas),
-        value: Number(tx.value),
+        gas: tx?.gas ? bn(tx.gas).toString() : undefined,
+        gasPrice: tx?.gasPrice ? bn(tx.gasPrice).toString() : undefined,
+        maxFeePerGas: tx?.maxFeePerGas ? bn(tx.maxFeePerGas).toString() : undefined,
+        maxPriorityFeePerGas: tx?.maxPriorityFeePerGas
+          ? bn(tx.maxPriorityFeePerGas).toString()
+          : undefined,
+        value: tx.value.toString(),
         blockNumber: Number(tx.blockNumber),
         transactionIndex: Number(tx.transactionIndex),
-        gasUsed: Number(tx.gasUsed),
-        cumulativeGasUsed: Number(tx.cumulativeGasUsed),
+        gasUsed: tx?.gasUsed ? bn(tx.gasUsed).toString() : undefined,
+        cumulativeGasUsed: tx?.cumulativeGasUsed ? bn(tx.cumulativeGasUsed).toString() : undefined,
       };
     }),
   };
