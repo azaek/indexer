@@ -89,8 +89,8 @@ export const saveBlock = async (block: Block): Promise<Block> => {
     `,
     {
       hash: toBuffer(block.hash),
-      number: block.number,
-      timestamp: block.timestamp,
+      number: Number(block.number),
+      timestamp: Number(block.timestamp),
       parentHash: toBuffer(block.parentHash),
       nonce: toBuffer(block.nonce),
       sha3Uncles: toBuffer(block.sha3Uncles),
@@ -102,11 +102,11 @@ export const saveBlock = async (block: Block): Promise<Block> => {
       miner: toBuffer(block.miner),
       difficulty: block?.difficulty ? toBuffer(block.difficulty) : null,
       totalDifficulty: toBuffer(block.totalDifficulty),
-      size: block.size,
+      size: Number(block.size),
       extraData: toBuffer(block.extraData),
-      gasLimit: block.gasLimit,
-      gasUsed: block.gasUsed,
-      baseFeePerGas: block.baseFeePerGas,
+      gasLimit: Number(block.gasLimit),
+      gasUsed: Number(block.gasUsed),
+      baseFeePerGas: Number(block.baseFeePerGas),
       uncles: block.uncles.map(toBuffer),
     }
   );
