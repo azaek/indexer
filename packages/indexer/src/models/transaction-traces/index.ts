@@ -21,10 +21,21 @@ export const saveTransactionTraces = async (transactionTraces: TransactionTraceM
   });
 
   for (const { hash, calls } of transactionTraces) {
-    values.push({
-      hash: toBuffer(hash),
-      calls,
-    });
+    try {
+      // skip traces that are rewards
+      // eslint-disable-next-line
+      // @ts-ignore
+      if (calls.find((call) => call.traceType === "reward")) {
+        continue;
+      }
+
+      values.push({
+        hash: toBuffer(hash),
+        calls,
+      });
+    } catch (error) {
+      // eslint-disable-next-line
+    }
   }
 
   if (values.length === 0) {
