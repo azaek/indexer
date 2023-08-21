@@ -14,6 +14,7 @@ export const config = {
   oracleAwsKmsKeyRegion: String(process.env.ORACLE_AWS_KMS_KEY_REGION),
 
   baseNetworkHttpUrl: String(process.env.BASE_NETWORK_HTTP_URL),
+  baseNetworkArchiveHttpUrl: String(process.env.BASE_NETWORK_ARCHIVE_HTTP_URL),
   baseNetworkWsUrl: String(process.env.BASE_NETWORK_WS_URL),
   traceNetworkHttpUrl: String(
     process.env.TRACE_NETWORK_HTTP_URL ?? process.env.BASE_NETWORK_HTTP_URL

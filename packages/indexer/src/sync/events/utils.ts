@@ -1,7 +1,7 @@
 import { AddressZero } from "@ethersproject/constants";
 import { bn } from "@/common/utils";
 
-import { baseProvider } from "@/common/provider";
+import { baseArchiveProvider, baseProvider } from "@/common/provider";
 
 import { Transaction, getTransaction, saveTransactions } from "@/models/transactions";
 import { TransactionReceipt } from "@ethersproject/providers";
@@ -202,7 +202,7 @@ export const getTracesFromBlock = async (blockNumber: number, retryMax = 10) => 
     try {
       // eslint-disable-next-line
       console.log(blockNumber);
-      const BlockTraces = (await baseProvider.send("trace_block", [
+      const BlockTraces = (await baseArchiveProvider.send("trace_block", [
         blockNumberToHex(blockNumber),
       ])) as {
         action: {

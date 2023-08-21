@@ -14,6 +14,14 @@ export const baseProvider = new StaticJsonRpcProvider(
   config.chainId
 );
 
+export const baseArchiveProvider = new StaticJsonRpcProvider(
+  {
+    url: config.baseNetworkArchiveHttpUrl,
+    headers: { "x-session-hash": getUuidByString(`${config.baseNetworkHttpUrl}${config.chainId}`) },
+  },
+  config.chainId
+);
+
 // https://github.com/ethers-io/ethers.js/issues/1053#issuecomment-808736570
 export const safeWebSocketSubscription = (
   callback: (provider: WebSocketProvider) => Promise<void>
