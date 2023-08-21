@@ -503,7 +503,7 @@ export class RabbitMqJobsConsumer {
 
       const subscribePromises = [];
       const subscribeToVhostPromises = [];
-      const txWorkQueues = ["events-backfill-job", "events-sync-historical"];
+      const txWorkQueues = ["events-backfill-job", "events-sync-historical", "trace-sync-job"];
 
       try {
         for (const queue of RabbitMqJobsConsumer.getQueues()) {
