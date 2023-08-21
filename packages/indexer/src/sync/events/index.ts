@@ -351,22 +351,22 @@ const processEvents = async (logs: any[], blockData: blocksModel.BlockWithTransa
 
 export const syncTraces = async (block: number) => {
   try {
-    logger.info("sync-events-v2", `Traces realtime syncing block ${block}`);
-    const { traces, getTransactionTracesTime } = await syncEventsUtils._getTransactionTraces(block);
+    // logger.info("sync-events-v2", `Traces realtime syncing block ${block}`);
+    const { traces } = await syncEventsUtils._getTransactionTraces(block);
     await saveTransactionTraces(traces);
     await syncEventsUtils.processContractAddresses(traces);
 
-    logger.info(
-      "sync-events-timing-historical",
-      JSON.stringify({
-        message: `Traces historical syncing block ${block}`,
-        block,
-        traces: {
-          count: traces.length,
-          getTransactionTracesTime,
-        },
-      })
-    );
+    // logger.info(
+    //   "sync-events-timing-historical",
+    //   JSON.stringify({
+    //     message: `Traces historical syncing block ${block}`,
+    //     block,
+    //     traces: {
+    //       count: traces.length,
+    //       getTransactionTracesTime,
+    //     },
+    //   })
+    // );
   } catch (error) {
     logger.warn(
       "sync-events-timing-historical",
@@ -378,7 +378,7 @@ export const syncTraces = async (block: number) => {
 
 export const syncEvents = async (block: number, syncEventsToMainDB = true) => {
   try {
-    logger.info("sync-events-v2", `Events realtime syncing block ${block}`);
+    // logger.info("sync-events-v2", `Events realtime syncing block ${block}`);
     const startSyncTime = Date.now();
     const blockData = await syncEventsUtils.fetchBlock(block);
 
@@ -446,14 +446,14 @@ export const syncEvents = async (block: number, syncEventsToMainDB = true) => {
       blockSyncTime: endSaveBlocksTime - startSyncTime,
     };
 
-    logger.info(
-      "sync-events-timing-historical",
-      JSON.stringify({
-        message: `Events historical syncing block ${block}`,
-        block,
-        ...timings,
-      })
-    );
+    // logger.info(
+    //   "sync-events-timing-historical",
+    //   JSON.stringify({
+    //     message: `Events historical syncing block ${block}`,
+    //     block,
+    //     ...timings,
+    //   })
+    // );
   } catch (error) {
     logger.warn(
       "sync-events-timing-historical",
