@@ -446,14 +446,14 @@ export const syncEvents = async (block: number, syncEventsToMainDB = true) => {
       blockSyncTime: endSaveBlocksTime - startSyncTime,
     };
 
-    // logger.info(
-    //   "sync-events-timing-historical",
-    //   JSON.stringify({
-    //     message: `Events historical syncing block ${block}`,
-    //     block,
-    //     ...timings,
-    //   })
-    // );
+    logger.info(
+      "sync-events-timing-historical",
+      JSON.stringify({
+        message: `Events historical syncing block ${block}`,
+        block,
+        ...timings,
+      })
+    );
   } catch (error) {
     logger.warn(
       "sync-events-timing-historical",
