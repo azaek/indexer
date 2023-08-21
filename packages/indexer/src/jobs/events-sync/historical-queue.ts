@@ -4,6 +4,7 @@ import { AbstractRabbitMqJobHandler, BackoffStrategy } from "@/jobs/abstract-rab
 
 import { checkSupports } from "@/events-sync/supports";
 import { redis } from "@/common/redis";
+import { traceSyncJob } from "./trace-sync-queue";
 
 export type EventsSyncHistoricalJobPayload = {
   block: number;
@@ -30,6 +31,7 @@ export class EventsSyncHistoricalJob extends AbstractRabbitMqJobHandler {
       const { block, syncEventsToMainDB } = payload;
 
       await syncEvents(block, syncEventsToMainDB);
+      await traceSyncJob.addToQueue({ block });
     } catch (error) {
       logger.warn(
         this.queueName,
