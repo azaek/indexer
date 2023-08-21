@@ -48,7 +48,7 @@ export class EventsSyncHistoricalJob extends AbstractRabbitMqJobHandler {
       const maxBlock = Number(await redis.get(`backfill:${payload.batchBackfillId}:toBlock`));
 
       if (block > latestBlock - 1 && block < maxBlock) {
-        // await redis.set(`backfill:${payload.batchBackfillId}:fromBlock`, `${block}`);
+        await redis.set(`backfill:${payload.batchBackfillId}:fromBlock`, `${block}`);
         await this.addToQueue({
           block: block + 1,
           syncEventsToMainDB,
