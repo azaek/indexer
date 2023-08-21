@@ -5,6 +5,7 @@ import { AbstractRabbitMqJobHandler, BackoffStrategy } from "@/jobs/abstract-rab
 import { checkSupports } from "@/events-sync/supports";
 import { redis } from "@/common/redis";
 import { traceSyncJob } from "./trace-sync-queue";
+import { config } from "@/config/index";
 
 export type EventsSyncHistoricalJobPayload = {
   block: number;
@@ -15,7 +16,7 @@ export type EventsSyncHistoricalJobPayload = {
 export class EventsSyncHistoricalJob extends AbstractRabbitMqJobHandler {
   queueName = "events-sync-historical";
   maxRetries = 30;
-  concurrency = 30;
+  concurrency = config.txWorkConcurrency;
   consumerTimeout = 60 * 3000;
   backoff = {
     type: "fixed",
