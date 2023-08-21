@@ -13,11 +13,7 @@ import { eventsSyncRealtimeJob } from "@/jobs/events-sync/events-sync-realtime-j
 
 import { removeUnsyncedEventsActivitiesJob } from "@/jobs/activities/remove-unsynced-events-activities-job";
 import { deleteTransactionLogs, saveTransactionLogs } from "@/models/transaction-logs";
-import {
-  TransactionTraceManyCalls,
-  deleteTransactionTraces,
-  saveTransactionTraces,
-} from "@/models/transaction-traces";
+import { deleteTransactionTraces, saveTransactionTraces } from "@/models/transaction-traces";
 import { TransactionReceipt } from "@ethersproject/providers";
 import { baseProvider } from "@/common/provider";
 import { redis } from "@/common/redis";
@@ -253,11 +249,11 @@ export const extractEventsBatches = (enhancedEvents: EnhancedEvent[]): EventsBat
 
 const getBlockSyncData = async (blockData: blocksModel.BlockWithTransactions) => {
   const [
-    { traces, getTransactionTracesTime },
+    // { traces, getTransactionTracesTime },
     { transactionReceipts, getTransactionReceiptsTime },
     { saveBlocksTime, endSaveBlocksTime },
   ] = await Promise.all([
-    syncEventsUtils._getTransactionTraces(blockData.transactions, blockData.number),
+    // syncEventsUtils._getTransactionTraces(blockData.number),
     syncEventsUtils._getTransactionReceiptsFromBlock(blockData),
     blocksModel._saveBlock({
       ...blockData,
@@ -265,10 +261,10 @@ const getBlockSyncData = async (blockData: blocksModel.BlockWithTransactions) =>
   ]);
 
   return {
-    traces,
+    // traces,
     transactionReceipts,
     getTransactionReceiptsTime,
-    getTransactionTracesTime,
+    // getTransactionTracesTime,
     saveBlocksTime,
     endSaveBlocksTime,
   };
@@ -276,8 +272,8 @@ const getBlockSyncData = async (blockData: blocksModel.BlockWithTransactions) =>
 
 const saveLogsAndTracesAndTransactions = async (
   blockData: blocksModel.BlockWithTransactions,
-  transactionReceipts: TransactionReceipt[],
-  traces: TransactionTraceManyCalls[]
+  transactionReceipts: TransactionReceipt[]
+  // traces: TransactionTraceManyCalls[]
 ) => {
   const transactionLogs: {
     hash: string;
@@ -301,9 +297,9 @@ const saveLogsAndTracesAndTransactions = async (
 
   await Promise.all([
     saveTransactionLogs(logs.flat()),
-    saveTransactionTraces(traces),
+    // saveTransactionTraces(traces),
     syncEventsUtils._saveBlockTransactions(blockData, transactionReceipts),
-    syncEventsUtils.processContractAddresses(traces),
+    // syncEventsUtils.processContractAddresses(traces),
   ]);
 
   const endTime = Date.now();
@@ -353,6 +349,33 @@ const processEvents = async (logs: any[], blockData: blocksModel.BlockWithTransa
   };
 };
 
+export const syncTraces = async (block: number) => {
+  try {
+    logger.info("sync-events-v2", `Traces realtime syncing block ${block}`);
+    const { traces, getTransactionTracesTime } = await syncEventsUtils._getTransactionTraces(block);
+    await saveTransactionTraces(traces);
+    await syncEventsUtils.processContractAddresses(traces);
+
+    logger.info(
+      "sync-events-timing-historical",
+      JSON.stringify({
+        message: `Traces historical syncing block ${block}`,
+        block,
+        traces: {
+          count: traces.length,
+          getTransactionTracesTime,
+        },
+      })
+    );
+  } catch (error) {
+    logger.warn(
+      "sync-events-timing-historical",
+      `Events realtime syncing failed: ${error}, block: ${block}`
+    );
+    throw error;
+  }
+};
+
 export const syncEvents = async (block: number, syncEventsToMainDB = true) => {
   try {
     logger.info("sync-events-v2", `Events realtime syncing block ${block}`);
@@ -367,18 +390,18 @@ export const syncEvents = async (block: number, syncEventsToMainDB = true) => {
     const endGetBlockTime = Date.now();
 
     const {
-      traces,
+      // traces,
       transactionReceipts,
       getTransactionReceiptsTime,
-      getTransactionTracesTime,
+      // getTransactionTracesTime,
       saveBlocksTime,
       endSaveBlocksTime,
     } = await getBlockSyncData(blockData);
 
     const { saveLogsAndTracesAndTransactionsTime, logs } = await saveLogsAndTracesAndTransactions(
       blockData,
-      transactionReceipts,
-      traces
+      transactionReceipts
+      // traces
     );
     let processEventLatencies;
 
@@ -408,8 +431,8 @@ export const syncEvents = async (block: number, syncEventsToMainDB = true) => {
         getTransactionReceiptsTime,
       },
       traces: {
-        count: traces.length,
-        getTransactionTracesTime,
+        // count: traces.length,
+        // getTransactionTracesTime,
         saveLogsAndTracesAndTransactionsTime,
       },
       logs: {

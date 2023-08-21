@@ -141,11 +141,7 @@ export const fetchTransaction = async (hash: string) => {
   const tx = await getTransaction(hash);
   return tx;
 };
-export const _getTransactionTraces = async (
-  _Txs: BlockWithTransactions["transactions"],
-  // eslint-disable-next-line
-  block: number
-) => {
+export const _getTransactionTraces = async (block: number) => {
   const timerStart = Date.now();
   let traces: TransactionTraceManyCalls[] = [];
 
