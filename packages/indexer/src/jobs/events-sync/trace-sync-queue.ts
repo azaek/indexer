@@ -11,7 +11,7 @@ export type TraceSyncJobPayload = {
 export class TraceSyncJob extends AbstractRabbitMqJobHandler {
   queueName = "trace-sync-job";
   maxRetries = 30;
-  concurrency = 25;
+  concurrency = 15;
   consumerTimeout = 60 * 3000;
   backoff = {
     type: "fixed",
