@@ -33,7 +33,7 @@ export type Transaction = {
 };
 
 export const saveTransactions = async (transactions: Transaction[]) => {
-  const CHUNK_SIZE = 10;
+  const CHUNK_SIZE = 1000;
 
   // eslint-disable-next-line
   // console.log(JSON.stringify(transactions));
