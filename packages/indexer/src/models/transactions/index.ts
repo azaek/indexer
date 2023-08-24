@@ -84,8 +84,10 @@ export const saveTransactions = async (transactions: Transaction[]) => {
     block_timestamp: Number(transaction.blockTimestamp),
     gas: Number(transaction.gasPrice),
     gas_price: Number(transaction.gasPrice),
-    max_fee_per_gas: Number(transaction.maxFeePerGas),
-    max_priority_fee_per_gas: Number(transaction.maxPriorityFeePerGas),
+    max_fee_per_gas: transaction?.maxFeePerGas ? Number(transaction.maxFeePerGas) : null,
+    max_priority_fee_per_gas: transaction?.maxPriorityFeePerGas
+      ? Number(transaction.maxPriorityFeePerGas)
+      : null,
     gas_used: Number(transaction.gasUsed),
     cumulative_gas_used: Number(transaction.cumulativeGasUsed),
     effective_gas_price: Number(transaction.effectiveGasPrice),
