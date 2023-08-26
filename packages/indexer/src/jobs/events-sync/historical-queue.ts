@@ -62,6 +62,11 @@ export class EventsSyncHistoricalJob extends AbstractRabbitMqJobHandler {
   public async addToQueue(params: EventsSyncHistoricalJobPayload, delay = 0) {
     await this.send({ payload: params, jobId: `${params.block}` }, delay);
   }
+
+  public async addToQueueBatch(payloads: EventsSyncHistoricalJobPayload[]) {
+    // await this.send({ payload: params, jobId: `${params.block}` }, delay);
+    await this.sendBatch(payloads.map((payload) => ({ payload })));
+  }
 }
 
 export const eventsSyncHistoricalJob = new EventsSyncHistoricalJob();

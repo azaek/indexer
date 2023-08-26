@@ -12,6 +12,7 @@ import { redis } from "@/common/redis";
 // import { randomUUID } from "crypto";
 import { eventsSyncHistoricalJob } from "./historical-queue";
 import { logger } from "ethers";
+// import { events } from "@elastic/elasticsearch";
 
 const QUEUE_NAME = "block-gap-check";
 
@@ -32,7 +33,7 @@ new QueueScheduler(QUEUE_NAME, { connection: redis.duplicate() });
 
 export const processBlockGapCheckJob = async (offset?: number) => {
   try {
-    const limit = 5000000;
+    const limit = 50000;
     const missingBlocks = await txdb.query(
       `WITH last_blocks AS (
         SELECT number
@@ -57,16 +58,23 @@ export const processBlockGapCheckJob = async (offset?: number) => {
     if (missingBlocks.length > 0) {
       // const delay = missingBlocks.length > 100 ? 1000 : 0;
 
-      logger.info(QUEUE_NAME, `Found missing blocks: ${missingBlocks.length}`);
-      for (let i = 0; i < missingBlocks.length; i++) {
-        await eventsSyncHistoricalJob.addToQueue(
-          {
-            block: missingBlocks[i].missing_block_number,
-            syncEventsToMainDB: false,
-          }
-          // delay * i
-        );
-      }
+      // logger.info(QUEUE_NAME, `Found missing blocks: ${missingBlocks.length}`);
+      // for (let i = 0; i < missingBlocks.length; i++) {
+      //   await eventsSyncHistoricalJob.addToQueue(
+      //     {
+      //       block: missingBlocks[i].missing_block_number,
+      //       syncEventsToMainDB: false,
+      //     }
+      //     // delay * i
+      //   );
+      // }
+
+      await eventsSyncHistoricalJob.addToQueueBatch(
+        missingBlocks.map((block: { missing_block_number: number }) => ({
+          block: block.missing_block_number,
+          syncEventsToMainDB: false,
+        }))
+      );
 
       if (missingBlocks.length === limit) {
         await processBlockGapCheckJob(offset ? offset + limit : limit);
