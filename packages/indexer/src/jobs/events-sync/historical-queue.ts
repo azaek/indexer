@@ -14,7 +14,7 @@ export type EventsSyncHistoricalJobPayload = {
 };
 
 export class EventsSyncHistoricalJob extends AbstractRabbitMqJobHandler {
-  queueName = "events-sync-historical";
+  queueName = "events-sync-historical-v2";
   maxRetries = 30;
   concurrency = config.txWorkConcurrency;
   consumerTimeout = 60 * 3000;
