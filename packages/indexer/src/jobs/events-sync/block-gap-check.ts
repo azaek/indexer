@@ -55,7 +55,7 @@ export const processBlockGapCheckJob = async (offset?: number) => {
     );
 
     if (missingBlocks.length > 0) {
-      const delay = missingBlocks.length > 100 ? 1000 : 0;
+      // const delay = missingBlocks.length > 100 ? 1000 : 0;
 
       // logger.info(QUEUE_NAME, `Found missing blocks: ${missingBlocks.length}`);
       for (let i = 0; i < missingBlocks.length; i++) {
@@ -63,8 +63,8 @@ export const processBlockGapCheckJob = async (offset?: number) => {
           {
             block: missingBlocks[i].missing_block_number,
             syncEventsToMainDB: false,
-          },
-          delay * i
+          }
+          // delay * i
         );
       }
 
