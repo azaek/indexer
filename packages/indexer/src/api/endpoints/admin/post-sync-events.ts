@@ -7,7 +7,8 @@ import Joi from "joi";
 import { logger } from "@/common/logger";
 import { regex } from "@/common/utils";
 import { config } from "@/config/index";
-import { eventsBackfillJob } from "@/jobs/events-sync/backfill-queue";
+// import { eventsBackfillJob } from "@/jobs/events-sync/backfill-queue";
+import { processBlockGapCheckJob } from "@/jobs/events-sync/block-gap-check";
 export const postSyncEventsOptions: RouteOptions = {
   description: "Trigger syncing of events.",
   tags: ["api", "x-admin"],
@@ -47,16 +48,18 @@ export const postSyncEventsOptions: RouteOptions = {
     const payload = request.payload as any;
 
     try {
-      const fromBlock = payload.fromBlock;
-      const toBlock = payload.toBlock;
+      // const fromBlock = payload.fromBlock;
+      // const toBlock = payload.toBlock;
+
+      processBlockGapCheckJob();
 
       logger.info("post-sync-events-handler", `Request received: ${JSON.stringify(payload)}`);
-      eventsBackfillJob.addToQueue({
-        fromBlock,
-        toBlock,
-        syncEventsToMainDB: payload?.syncEventsToMainDB,
-        chunkSize: payload?.chunkSize,
-      });
+      // eventsBackfillJob.addToQueue({
+      //   fromBlock,
+      //   toBlock,
+      //   syncEventsToMainDB: payload?.syncEventsToMainDB,
+      //   chunkSize: payload?.chunkSize,
+      // });
 
       return { message: "Request accepted" };
     } catch (error) {
