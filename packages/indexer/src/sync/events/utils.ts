@@ -28,10 +28,7 @@ export const fetchBlock = async (blockNumber: number, retryMax = 10) => {
   let retries = 0;
   while (!block && retries < retryMax) {
     try {
-      block = await baseProvider.send("eth_getBlockByNumber", [
-        blockNumberToHex(blockNumber),
-        true,
-      ]);
+      block = await baseProvider.send("eth_getBlockByNumber", [blockNumber, true]);
     } catch (e) {
       logger.error(`get-block`, `Failed to get block ${blockNumber}, ${e}`);
       retries++;

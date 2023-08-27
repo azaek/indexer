@@ -248,7 +248,7 @@ export const extractEventsBatches = (enhancedEvents: EnhancedEvent[]): EventsBat
 };
 
 const getBlockSyncData = async (blockData: blocksModel.BlockWithTransactions) => {
-  logger.info("sync-events-v2", `Saving block ${blockData.number}`);
+  logger.info("sync-events-historical", `Saving block ${blockData.number}`);
   const [
     // { traces, getTransactionTracesTime },
     { transactionReceipts, getTransactionReceiptsTime },
@@ -261,7 +261,7 @@ const getBlockSyncData = async (blockData: blocksModel.BlockWithTransactions) =>
     }),
   ]);
 
-  logger.info("sync-events-v2", `Saved block ${blockData.number}`);
+  logger.info("sync-events-historical", `Saved block ${blockData.number}`);
 
   return {
     // traces,
@@ -333,7 +333,7 @@ const processEvents = async (logs: any[], blockData: blocksModel.BlockWithTransa
             log,
           }));
       } catch (error) {
-        logger.error("sync-events-v2", `Failed to handle events: ${error}`);
+        logger.error("sync-events-historical", `Failed to handle events: ${error}`);
         throw error;
       }
     })
@@ -354,7 +354,7 @@ const processEvents = async (logs: any[], blockData: blocksModel.BlockWithTransa
 
 export const syncTraces = async (block: number) => {
   try {
-    // logger.info("sync-events-v2", `Traces realtime syncing block ${block}`);
+    // logger.info("sync-events-historical", `Traces realtime syncing block ${block}`);
     const { traces } = await syncEventsUtils._getTransactionTraces(block);
     await saveTransactionTraces(traces);
     await syncEventsUtils.processContractAddresses(traces);
@@ -381,13 +381,13 @@ export const syncTraces = async (block: number) => {
 
 export const syncEvents = async (block: number, syncEventsToMainDB = true) => {
   try {
-    logger.info("sync-events-v2", `Events realtime syncing block ${block}`);
+    logger.info("sync-events-historical", `Events realtime syncing block ${block}`);
     const startSyncTime = Date.now();
     const blockData = await syncEventsUtils.fetchBlock(block);
-    logger.info("sync-events-v2", `Fetched block ${block}`);
+    logger.info("sync-events-historical", `Fetched block ${block}`);
 
     if (!blockData) {
-      logger.warn("sync-events-timing-historical", `Block ${block} not found`);
+      logger.warn("sync-events-historical", `Block ${block} not found`);
       throw new Error(`Block ${block} not found`);
     }
 
@@ -488,7 +488,7 @@ export const checkForMissingBlocks = async (block: number) => {
       if (block - latestBlockNumber > 1) {
         // if we are missing more than 1 block, we need to sync the missing blocks
         for (let i = latestBlockNumber + 1; i < block; i++) {
-          logger.info("sync-events-v2", `Found missing block: ${i}`);
+          logger.info("sync-events-historical", `Found missing block: ${i}`);
           await eventsSyncRealtimeJob.addToQueue({ block: i });
         }
       }
