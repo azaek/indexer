@@ -33,6 +33,23 @@ new QueueScheduler(QUEUE_NAME, { connection: redis.duplicate() });
 
 export const processBlockGapCheckJob = async (offset?: number) => {
   try {
+    const start = 46405059;
+    const end = 46832066;
+
+    // from start to end, add batch jobs in batches of 10000
+    for (let i = start; i < end; i += 10000) {
+      await eventsSyncHistoricalJob.addToQueueBatch(
+        Array.from({ length: 10000 }, (_, i) => ({
+          block: i + start,
+          syncEventsToMainDB: false,
+        }))
+      );
+    }
+
+    if (start) {
+      return;
+    }
+
     const limit = 100000;
     if (offset && offset >= 45_000_000) {
       logger.info(QUEUE_NAME, `Reached block ${offset}`);
