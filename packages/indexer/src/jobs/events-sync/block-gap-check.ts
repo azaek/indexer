@@ -36,15 +36,12 @@ export const processBlockGapCheckJob = async (offset?: number) => {
     const start = 46405059;
     const end = 46832066;
 
-    // from start to end, add batch jobs in batches of 10000
-    for (let i = start; i < end; i += 10000) {
-      await eventsSyncHistoricalJob.addToQueueBatch(
-        Array.from({ length: 10000 }, (_, i) => ({
-          block: i + start,
-          syncEventsToMainDB: false,
-        }))
-      );
-    }
+    await eventsSyncHistoricalJob.addToQueueBatch(
+      Array.from({ length: end - start + 1 }, (_, i) => ({
+        block: start + i,
+        syncEventsToMainDB: false,
+      }))
+    );
 
     if (start) {
       return;
