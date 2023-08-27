@@ -34,6 +34,10 @@ new QueueScheduler(QUEUE_NAME, { connection: redis.duplicate() });
 export const processBlockGapCheckJob = async (offset?: number) => {
   try {
     const limit = 50000;
+    if (offset && offset >= 45_000_000) {
+      logger.info(QUEUE_NAME, `Reached block ${offset}`);
+      return;
+    }
     const missingBlocks = await txdb.query(
       `WITH last_blocks AS (
         SELECT number
@@ -76,9 +80,9 @@ export const processBlockGapCheckJob = async (offset?: number) => {
         }))
       );
 
-      if (missingBlocks.length === limit) {
-        await processBlockGapCheckJob(offset ? offset + limit : limit);
-      }
+      // if (missingBlocks.length === limit) {
+      await processBlockGapCheckJob(offset ? offset + limit : limit);
+      // }
     } else {
       logger.info(
         QUEUE_NAME,
