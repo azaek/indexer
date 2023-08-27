@@ -248,7 +248,6 @@ export const extractEventsBatches = (enhancedEvents: EnhancedEvent[]): EventsBat
 };
 
 const getBlockSyncData = async (blockData: blocksModel.BlockWithTransactions) => {
-  logger.info("sync-events-historical", `Saving block ${blockData.number}`);
   const [
     // { traces, getTransactionTracesTime },
     { transactionReceipts, getTransactionReceiptsTime },
@@ -260,8 +259,6 @@ const getBlockSyncData = async (blockData: blocksModel.BlockWithTransactions) =>
       ...blockData,
     }),
   ]);
-
-  logger.info("sync-events-historical", `Saved block ${blockData.number}`);
 
   return {
     // traces,
@@ -381,10 +378,8 @@ export const syncTraces = async (block: number) => {
 
 export const syncEvents = async (block: number, syncEventsToMainDB = true) => {
   try {
-    logger.info("sync-events-historical", `Events realtime syncing block ${block}`);
     const startSyncTime = Date.now();
     const blockData = await syncEventsUtils.fetchBlock(block);
-    logger.info("sync-events-historical", `Fetched block ${block}`);
 
     if (!blockData) {
       logger.warn("sync-events-historical", `Block ${block} not found`);
