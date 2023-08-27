@@ -8,6 +8,7 @@ import { acquireLock, redis } from "@/common/redis";
 import { config } from "@/config/index";
 import { logger } from "@/common/logger";
 import _ from "lodash";
+// import { syncEvents } from "./sync/events";
 
 if (process.env.LOCAL_TESTING) {
   import("./setup");

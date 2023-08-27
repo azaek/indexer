@@ -33,6 +33,7 @@ export const fetchBlock = async (blockNumber: number, retryMax = 10) => {
         true,
       ]);
     } catch (e) {
+      logger.error(`get-block`, `Failed to get block ${blockNumber}, ${e}`);
       retries++;
       await new Promise((resolve) => setTimeout(resolve, 200));
     }
