@@ -248,6 +248,7 @@ export const extractEventsBatches = (enhancedEvents: EnhancedEvent[]): EventsBat
 };
 
 const getBlockSyncData = async (blockData: blocksModel.BlockWithTransactions) => {
+  logger.info("sync-events-v2", `Saving block ${blockData.number}`);
   const [
     // { traces, getTransactionTracesTime },
     { transactionReceipts, getTransactionReceiptsTime },
@@ -259,6 +260,8 @@ const getBlockSyncData = async (blockData: blocksModel.BlockWithTransactions) =>
       ...blockData,
     }),
   ]);
+
+  logger.info("sync-events-v2", `Saved block ${blockData.number}`);
 
   return {
     // traces,
@@ -381,6 +384,7 @@ export const syncEvents = async (block: number, syncEventsToMainDB = true) => {
     logger.info("sync-events-v2", `Events realtime syncing block ${block}`);
     const startSyncTime = Date.now();
     const blockData = await syncEventsUtils.fetchBlock(block);
+    logger.info("sync-events-v2", `Fetched block ${block}`);
 
     if (!blockData) {
       logger.warn("sync-events-timing-historical", `Block ${block} not found`);
@@ -455,10 +459,7 @@ export const syncEvents = async (block: number, syncEventsToMainDB = true) => {
       })
     );
   } catch (error) {
-    logger.warn(
-      "sync-events-timing-historical",
-      `Events realtime syncing failed: ${error}, block: ${block}`
-    );
+    logger.warn(" ", `Events realtime syncing failed: ${error}, block: ${block}`);
     throw error;
   }
 };
