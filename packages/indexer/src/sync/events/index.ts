@@ -378,7 +378,7 @@ export const syncTraces = async (block: number) => {
 
 export const syncEvents = async (block: number, syncEventsToMainDB = true) => {
   try {
-    // logger.info("sync-events-v2", `Events realtime syncing block ${block}`);
+    logger.info("sync-events-v2", `Events realtime syncing block ${block}`);
     const startSyncTime = Date.now();
     const blockData = await syncEventsUtils.fetchBlock(block);
 
