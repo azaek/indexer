@@ -86,22 +86,20 @@ export const processBlockGapCheckJob = async (offset?: number) => {
   }
 };
 
-if (config.doBackgroundWork && config.doWebsocketServerWork) {
-  const worker = new Worker(
-    QUEUE_NAME,
-    async (job: Job) => {
-      const { offset } = job.data;
-      await processBlockGapCheckJob(offset);
-    },
-    {
-      connection: redis.duplicate(),
-      concurrency: 1,
-    }
-  );
-  worker.on("error", (error) => {
-    logger.error(QUEUE_NAME, `Worker errored. error=${JSON.stringify(error)}`);
-  });
-}
+const worker = new Worker(
+  QUEUE_NAME,
+  async (job: Job) => {
+    const { offset } = job.data;
+    await processBlockGapCheckJob(offset);
+  },
+  {
+    connection: redis.duplicate(),
+    concurrency: 1,
+  }
+);
+worker.on("error", (error) => {
+  logger.error(QUEUE_NAME, `Worker errored. error=${JSON.stringify(error)}`);
+});
 
 // eslint-disable-next-line
 // console.log("processBlockGapCheckJob");
