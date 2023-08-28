@@ -47,7 +47,7 @@ export const processBlockGapCheckJob = async (offset?: number) => {
     //   return;
     // }
 
-    const limit = 5000000;
+    const limit = 1000000;
     if (offset && offset >= 48_000_000) {
       logger.info(QUEUE_NAME, `Reached block ${offset}`);
       return;
@@ -93,33 +93,8 @@ export const processBlockGapCheckJob = async (offset?: number) => {
           syncEventsToMainDB: false,
         }))
       );
-
-      // if (missingBlocks.length === limit) {
-      await processBlockGapCheckJob(offset ? offset + limit : limit);
-      // }
-    } else {
-      logger.info(
-        QUEUE_NAME,
-        `No missing blocks found: ${`WITH last_blocks AS (
-        SELECT number
-        FROM blocks
-        ORDER BY number DESC
-        LIMIT ${limit}
-        ${offset ? `OFFSET ${offset}` : ""}
-        ),
-        sequence AS (
-        SELECT generate_series(
-            (SELECT min(number) FROM last_blocks),
-            (SELECT max(number) FROM last_blocks)
-        ) AS number
-        )
-        SELECT s.number AS missing_block_number
-        FROM sequence s
-        LEFT JOIN last_blocks lb ON s.number = lb.number
-        WHERE lb.number IS NULL
-        ORDER BY s.number`}`
-      );
     }
+    await processBlockGapCheckJob(offset ? offset + limit : limit);
   } catch (error) {
     logger.warn(QUEUE_NAME, `Failed to check block gap: ${error}`);
 
