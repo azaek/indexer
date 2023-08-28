@@ -31,7 +31,7 @@ export const queue = new Queue(QUEUE_NAME, {
 });
 new QueueScheduler(QUEUE_NAME, { connection: redis.duplicate() });
 
-export const processBlockGapCheckJob = async (offset?: number) => {
+export const processBlockGapCheckJob = async () => {
   try {
     // const start = 46405059;
     // const end = 46832066;
@@ -47,20 +47,18 @@ export const processBlockGapCheckJob = async (offset?: number) => {
     //   return;
     // }
 
-    const limit = 1000000;
+    // const limit = 1000000;
     // if (offset && offset >= 48_000_000) {
     //   logger.info(QUEUE_NAME, `Reached block ${offset}`);
     //   return;
     // }
 
-    logger.info(QUEUE_NAME, `Checking block gap: ${offset ? offset : 0}`);
+    logger.info(QUEUE_NAME, `Checking block gap`);
     const missingBlocks = await txdb.query(
       `WITH last_blocks AS (
         SELECT number
         FROM blocks
         ORDER BY number ASC
-        LIMIT ${limit}
-        ${offset ? `OFFSET ${offset}` : ""}
         ),
         sequence AS (
         SELECT generate_series(
@@ -74,6 +72,7 @@ export const processBlockGapCheckJob = async (offset?: number) => {
         WHERE lb.number IS NULL
         ORDER BY s.number`
     );
+    logger.info(QUEUE_NAME, `Found missing blocks: ${missingBlocks.length}`);
 
     if (missingBlocks.length > 0) {
       // const delay = missingBlocks.length > 100 ? 1000 : 0;
