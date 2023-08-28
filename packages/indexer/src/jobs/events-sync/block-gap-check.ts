@@ -1,18 +1,13 @@
-// import { AbstractRabbitMqJobHandler, BackoffStrategy } from "@/jobs/abstract-rabbit-mq-job-handler";
-
-// import { logger } from "@/common/logger";
 import { txdb } from "@/common/db";
-// import { eventsSyncRealtimeJob } from "@/jobs/events-sync/events-sync-realtime-job";
-// import { config } from "@/config/index";
 
-import { Queue, QueueScheduler } from "bullmq";
+import { Job, Queue, QueueScheduler, Worker } from "bullmq";
 
 import { redis } from "@/common/redis";
 
-// import { randomUUID } from "crypto";
 import { eventsSyncHistoricalJob } from "./historical-queue";
 import { logger } from "@/common/logger";
-// import { events } from "@elastic/elasticsearch";
+import { config } from "@/config/index";
+import { randomUUID } from "crypto";
 
 const QUEUE_NAME = "block-gap-check";
 
@@ -26,39 +21,27 @@ export const queue = new Queue(QUEUE_NAME, {
     },
     removeOnComplete: 1000,
     removeOnFail: 1000,
-    timeout: 60000,
+    timeout: 120000,
   },
 });
 new QueueScheduler(QUEUE_NAME, { connection: redis.duplicate() });
 
-export const processBlockGapCheckJob = async () => {
+export const processBlockGapCheckJob = async (offset?: number) => {
   try {
-    // const start = 46405059;
-    // const end = 46832066;
+    const limit = 5000000;
+    if (offset && offset >= 48_000_000) {
+      logger.info(QUEUE_NAME, `Reached block ${offset}`);
+      return;
+    }
 
-    // await eventsSyncHistoricalJob.addToQueueBatch(
-    //   Array.from({ length: end - start + 1 }, (_, i) => ({
-    //     block: start + i,
-    //     syncEventsToMainDB: false,
-    //   }))
-    // );
-
-    // if (start) {
-    //   return;
-    // }
-
-    // const limit = 1000000;
-    // if (offset && offset >= 48_000_000) {
-    //   logger.info(QUEUE_NAME, `Reached block ${offset}`);
-    //   return;
-    // }
-
-    logger.info(QUEUE_NAME, `Checking block gap`);
+    logger.info(QUEUE_NAME, `Checking block gap: ${offset ? offset : 0}`);
     const missingBlocks = await txdb.query(
       `WITH last_blocks AS (
         SELECT number
         FROM blocks
         ORDER BY number ASC
+        LIMIT ${limit}
+        ${offset ? `OFFSET ${offset}` : ""}
         ),
         sequence AS (
         SELECT generate_series(
@@ -72,7 +55,6 @@ export const processBlockGapCheckJob = async () => {
         WHERE lb.number IS NULL
         ORDER BY s.number`
     );
-    logger.info(QUEUE_NAME, `Found missing blocks: ${missingBlocks.length}`);
 
     if (missingBlocks.length > 0) {
       // const delay = missingBlocks.length > 100 ? 1000 : 0;
@@ -95,6 +77,8 @@ export const processBlockGapCheckJob = async () => {
         }))
       );
     }
+
+    await addToQueue(offset ? offset + limit : limit);
   } catch (error) {
     logger.warn(QUEUE_NAME, `Failed to check block gap: ${error}`);
 
@@ -102,38 +86,41 @@ export const processBlockGapCheckJob = async () => {
   }
 };
 
-// if (config.doBackgroundWork && config.doWebsocketServerWork) {
-//   const worker = new Worker(
-//     QUEUE_NAME,
-//     async () => {
-//       await processBlockGapCheckJob();
-//     },
-//     {
-//       connection: redis.duplicate(),
-//       concurrency: 1,
-//     }
-//   );
-//   worker.on("error", (error) => {
-//     logger.error(QUEUE_NAME, `Worker errored. error=${JSON.stringify(error)}`);
-//   });
-// }
+if (config.doBackgroundWork && config.doWebsocketServerWork) {
+  const worker = new Worker(
+    QUEUE_NAME,
+    async (job: Job) => {
+      const { offset } = job.data;
+      await processBlockGapCheckJob(offset);
+    },
+    {
+      connection: redis.duplicate(),
+      concurrency: 1,
+    }
+  );
+  worker.on("error", (error) => {
+    logger.error(QUEUE_NAME, `Worker errored. error=${JSON.stringify(error)}`);
+  });
+}
 
 // eslint-disable-next-line
 // console.log("processBlockGapCheckJob");
 
-// export const addToQueue = async () => {
-//   if (!config.doBackgroundWork) {
-//     return;
-//   }
+export const addToQueue = async (offset: number) => {
+  if (!config.doBackgroundWork) {
+    return;
+  }
 
-//   await queue.add(
-//     QUEUE_NAME,
-//     {},
-//     {
-//       jobId: randomUUID(),
-//     }
-//   );
-// };
+  await queue.add(
+    QUEUE_NAME,
+    {
+      offset,
+    },
+    {
+      jobId: randomUUID(),
+    }
+  );
+};
 
 // export class BlockGapCheckJob extends AbstractRabbitMqJobHandler {
 //   queueName = "block-gap-check";

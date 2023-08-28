@@ -8,7 +8,7 @@ import { logger } from "@/common/logger";
 import { regex } from "@/common/utils";
 import { config } from "@/config/index";
 // import { eventsBackfillJob } from "@/jobs/events-sync/backfill-queue";
-import { processBlockGapCheckJob } from "@/jobs/events-sync/block-gap-check";
+import * as blockGapCheck from "@/jobs/events-sync/block-gap-check";
 export const postSyncEventsOptions: RouteOptions = {
   description: "Trigger syncing of events.",
   tags: ["api", "x-admin"],
@@ -51,7 +51,7 @@ export const postSyncEventsOptions: RouteOptions = {
       // const fromBlock = payload.fromBlock;
       // const toBlock = payload.toBlock;
 
-      processBlockGapCheckJob();
+      blockGapCheck.addToQueue(0);
 
       logger.info("post-sync-events-handler", `Request received: ${JSON.stringify(payload)}`);
       // eventsBackfillJob.addToQueue({
