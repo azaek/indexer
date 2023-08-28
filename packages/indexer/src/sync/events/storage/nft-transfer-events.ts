@@ -7,6 +7,7 @@ import { BaseEventParams } from "@/events-sync/parser";
 import { eventsSyncNftTransfersWriteBufferJob } from "@/jobs/events-sync/write-buffers/nft-transfers-job";
 import { AddressZero } from "@ethersproject/constants";
 import { tokenReclacSupplyJob } from "@/jobs/token-updates/token-reclac-supply-job";
+import { logger } from "@/common/logger";
 
 export type Event = {
   kind: ContractKind;
@@ -270,6 +271,9 @@ function buildTokenValuesQueries(tokenValuesChunk: erc721Token[] | erc1155Token[
 }
 
 async function insertQueries(queries: string[], backfill: boolean) {
+  logger.info("sync-events-historical", `Inserting ${queries.length} queries`);
+  return;
+
   if (backfill) {
     // When backfilling, use the write buffer to avoid deadlocks
     for (const query of _.chunk(queries, 1000)) {
