@@ -47,11 +47,11 @@ export const processBlockGapCheckJob = async (offset?: number) => {
     //   return;
     // }
 
-    const limit = 5000000;
-    if (offset && offset >= 48_000_000) {
-      logger.info(QUEUE_NAME, `Reached block ${offset}`);
-      return;
-    }
+    const limit = 1000000;
+    // if (offset && offset >= 48_000_000) {
+    //   logger.info(QUEUE_NAME, `Reached block ${offset}`);
+    //   return;
+    // }
 
     logger.info(QUEUE_NAME, `Checking block gap: ${offset ? offset : 0}`);
     const missingBlocks = await txdb.query(
@@ -96,7 +96,6 @@ export const processBlockGapCheckJob = async (offset?: number) => {
         }))
       );
     }
-    await processBlockGapCheckJob(offset ? offset + limit : limit);
   } catch (error) {
     logger.warn(QUEUE_NAME, `Failed to check block gap: ${error}`);
 
