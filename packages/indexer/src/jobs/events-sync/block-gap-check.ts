@@ -28,7 +28,7 @@ new QueueScheduler(QUEUE_NAME, { connection: redis.duplicate() });
 
 export const processBlockGapCheckJob = async (offset?: number) => {
   try {
-    const limit = 100000;
+    const limit = 50000;
     if (offset && offset >= 48_000_000) {
       logger.info(QUEUE_NAME, `Reached block ${offset}`);
       return;
