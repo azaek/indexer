@@ -9,7 +9,7 @@ import { logger } from "@/common/logger";
 import { config } from "@/config/index";
 import { randomUUID } from "crypto";
 
-const QUEUE_NAME = "block-gap-check";
+const QUEUE_NAME = "block-gap-check-2";
 
 export const queue = new Queue(QUEUE_NAME, {
   connection: redis.duplicate(),
