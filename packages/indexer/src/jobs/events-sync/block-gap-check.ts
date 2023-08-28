@@ -11,7 +11,7 @@ import { redis } from "@/common/redis";
 
 // import { randomUUID } from "crypto";
 import { eventsSyncHistoricalJob } from "./historical-queue";
-import { logger } from "ethers";
+import { logger } from "@/common/logger";
 // import { events } from "@elastic/elasticsearch";
 
 const QUEUE_NAME = "block-gap-check";
@@ -52,6 +52,7 @@ export const processBlockGapCheckJob = async (offset?: number) => {
       logger.info(QUEUE_NAME, `Reached block ${offset}`);
       return;
     }
+
     logger.info(QUEUE_NAME, `Checking block gap: ${offset ? offset : 0}`);
     const missingBlocks = await txdb.query(
       `WITH last_blocks AS (
