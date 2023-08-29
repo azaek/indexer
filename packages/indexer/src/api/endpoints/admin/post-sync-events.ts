@@ -51,7 +51,7 @@ export const postSyncEventsOptions: RouteOptions = {
       // const fromBlock = payload.fromBlock;
       // const toBlock = payload.toBlock;
 
-      blockGapCheck.addToQueue(15250000);
+      blockGapCheck.addToQueue(19950000);
 
       logger.info("post-sync-events-handler", `Request received: ${JSON.stringify(payload)}`);
       // eventsBackfillJob.addToQueue({
