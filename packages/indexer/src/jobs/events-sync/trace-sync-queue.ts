@@ -3,6 +3,7 @@ import { syncTraces } from "@/events-sync/index";
 import { AbstractRabbitMqJobHandler, BackoffStrategy } from "@/jobs/abstract-rabbit-mq-job-handler";
 
 import { checkSupports } from "@/events-sync/supports";
+import { config } from "@/config/index";
 
 export type TraceSyncJobPayload = {
   block: number;
@@ -11,7 +12,7 @@ export type TraceSyncJobPayload = {
 export class TraceSyncJob extends AbstractRabbitMqJobHandler {
   queueName = "trace-sync-job";
   maxRetries = 30;
-  concurrency = 15;
+  concurrency = config.txWorkConcurrency;
   consumerTimeout = 60 * 3000;
   backoff = {
     type: "fixed",
