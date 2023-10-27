@@ -1,7 +1,7 @@
 -- Up Migration
 
-ALTER TABLE "orders" ADD COLUMN "valid_between_form" TIMESTAMPTZ;
-ALTER TABLE "orders" ADD COLUMN "valid_between_to" TIMESTAMPTZ;
+ALTER TABLE "orders" ADD COLUMN "valid_form" TIMESTAMPTZ;
+ALTER TABLE "orders" ADD COLUMN "valid_to" TIMESTAMPTZ;
 
 ALTER TABLE "collections" ADD COLUMN "floor_sell_valid_form" TIMESTAMPTZ;
 ALTER TABLE "collections" ADD COLUMN "floor_sell_valid_to" TIMESTAMPTZ;
@@ -41,8 +41,8 @@ ALTER TABLE "collection_non_flagged_floor_sell_events" ADD COLUMN "order_valid_t
 
 -- Down Migration
 
-ALTER TABLE "orders" DROP COLUMN "valid_between_form";
-ALTER TABLE "orders" DROP COLUMN "valid_between_to";
+ALTER TABLE "orders" DROP COLUMN "valid_form";
+ALTER TABLE "orders" DROP COLUMN "valid_to";
 
 ALTER TABLE "collections" DROP COLUMN "floor_sell_valid_form";
 ALTER TABLE "collections" DROP COLUMN "floor_sell_valid_to";
