@@ -39,19 +39,19 @@ if (process.env.DATADOG_AGENT_URL) {
   });
 
   tracer.use("ioredis", {
-    enabled: config.chainId === 137 ? true : false,
+    enabled: false,
   });
 
   tracer.use("amqplib", {
-    enabled: config.chainId === 137 ? true : false,
+    enabled: false,
   });
 
   tracer.use("pg", {
-    enabled: config.chainId === 137 ? true : false,
+    enabled: false,
   });
 
   tracer.use("elasticsearch", {
-    enabled: config.chainId === 137 ? true : false,
+    enabled: false,
   });
 }
 
